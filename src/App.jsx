@@ -3,16 +3,14 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 /* ================= PUBLIC PAGES =================
    Accessible without authentication */
 import Login from "./pages/Login";
-import PublicLeaderboard from "./pages/PublicLeaderboard";
-import VerifyCertificate from "./pages/VerifyCertificate"; // Public verification
+import VerifyCertificate from "./pages/VerifyCertificate";
 
 /* ================= STUDENT PAGES =================
-   Requires user to be authenticated (student role) */
+   Requires user to be authenticated */
 import Dashboard from "./pages/Dashboard";
 import Test from "./pages/Test";
 import Result from "./pages/Result";
 import Profile from "./pages/Profile";
-import Leaderboard from "./pages/Leaderboard";
 
 /* ================= ADMIN PAGES =================
    Requires authenticated admin role */
@@ -43,21 +41,12 @@ function App() {
 
         {/* =====================================================
             🌐 PUBLIC ROUTES
-            - No login required
-            - Accessible by anyone
         ===================================================== */}
 
         {/* Login / Entry point */}
         <Route path="/" element={<Login />} />
 
-        {/* Public leaderboard (optional marketing / SEO page) */}
-        <Route
-          path="/public-leaderboard"
-          element={<PublicLeaderboard />}
-        />
-
-        {/* 🔐 Public certificate verification
-            Used by employers / third parties */}
+        {/* 🔐 Public certificate verification */}
         <Route
           path="/verify/:certificateId"
           element={<VerifyCertificate />}
@@ -65,11 +54,8 @@ function App() {
 
         {/* =====================================================
             🎓 STUDENT ROUTES
-            - Requires authentication
-            - Wrapped in ProtectedRoute
         ===================================================== */}
 
-        {/* Student dashboard */}
         <Route
           path="/dashboard"
           element={
@@ -79,7 +65,6 @@ function App() {
           }
         />
 
-        {/* Attempt a test */}
         <Route
           path="/test/:id"
           element={
@@ -89,7 +74,6 @@ function App() {
           }
         />
 
-        {/* View result after submission */}
         <Route
           path="/result"
           element={
@@ -99,7 +83,6 @@ function App() {
           }
         />
 
-        {/* Student profile (analytics + certificates) */}
         <Route
           path="/profile"
           element={
@@ -109,24 +92,10 @@ function App() {
           }
         />
 
-        {/* Private leaderboard for logged-in users */}
-        <Route
-          path="/leaderboard"
-          element={
-            <ProtectedRoute>
-              <Leaderboard />
-            </ProtectedRoute>
-          }
-        />
-
         {/* =====================================================
             🛠️ ADMIN ROUTES
-            - Requires authentication + admin role
-            - ProtectedRoute → logged in
-            - AdminRoute     → role === "admin"
         ===================================================== */}
 
-        {/* Admin dashboard (test creation + management) */}
         <Route
           path="/admin"
           element={
@@ -138,12 +107,7 @@ function App() {
           }
         />
 
-        {/* -----------------------------------------------------
-           ⚠️ OPTIONAL / DEPRECATED (Based on your decision)
-           ManageQuestions page
-           - You decided to REMOVE post-creation question editing
-           - This route can be safely DELETED if not needed
-        ----------------------------------------------------- */}
+        {/* OPTIONAL / LEGACY (safe to delete if unused) */}
         <Route
           path="/admin/tests/:testId/questions"
           element={

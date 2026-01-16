@@ -2,14 +2,8 @@
  * Profile.jsx
  *
  * ROLE:
- * - Acts as the MAIN CONTROLLER for the Student Profile page
- * - Handles data fetching, state management, and orchestration
- * - Renders UI sections and controls certificate/payment flow
- *
- * IMPORTANT:
- * - This file intentionally contains logic
- * - UI-heavy parts will later be delegated to components
- * - NO business logic should be duplicated elsewhere
+ * - Main controller for Student Profile
+ * - Handles data, certificates, and retry logic
  */
 
 import { useEffect, useState } from "react";
@@ -22,17 +16,18 @@ import {
   doc,
   getDoc,
   updateDoc,
+  setDoc,
+  serverTimestamp,
 } from "firebase/firestore";
 import { useNavigate } from "react-router-dom";
 import { generateAvatarUrl } from "../utils/avatar";
 import { generateCertificate } from "../utils/generateCertificate";
 
+// 🔁 Try Again button (FAILED users only)
+import RetakeRequestButton from "../components/retake/RetakeRequestButton";
+
 /* ======================================================
    CERTIFICATE DISPLAY METADATA
-   ------------------------------------------------------
-   - Maps certificate tier → label + emoji
-   - Used ONLY for UI display
-   - Keeps certificate logic clean & consistent
 ====================================================== */
 const CERTIFICATE_META = {
   completion: { label: "Completion Certificate", icon: "🏅" },
@@ -42,62 +37,28 @@ const CERTIFICATE_META = {
 
 const Profile = () => {
   const navigate = useNavigate();
-
-  // Logged-in user's UID (single source of truth)
   const uid = auth.currentUser.uid;
 
-  /* ======================================================
-     STATE MANAGEMENT
-     ------------------------------------------------------
-     This component owns ALL profile-related state
-  ====================================================== */
-
-  // User document from Firestore
+  /* ================= STATE ================= */
   const [userInfo, setUserInfo] = useState(null);
-
-  // Editable name field
   const [name, setName] = useState("");
-
-  // All test attempts made by the user
   const [results, setResults] = useState([]);
-
-  // Cached test data indexed by testId
-  // Avoids repeated Firestore reads
   const [testsMap, setTestsMap] = useState({});
-
-  // Page loading indicator
   const [loading, setLoading] = useState(true);
-
-  // Profile save button loading state
   const [saving, setSaving] = useState(false);
 
-  /* ======================================================
-     PAYMENT FLOW STATE
-     ------------------------------------------------------
-     Controls paid certificate modal
-  ====================================================== */
   const [showPaymentPopup, setShowPaymentPopup] = useState(false);
   const [selectedCert, setSelectedCert] = useState(null);
 
-  /* ======================================================
-     LOAD PROFILE DATA (ON PAGE LOAD)
-     ------------------------------------------------------
-     1. Fetch user profile
-     2. Fetch test results
-     3. Fetch related tests
-     4. Cache everything locally
-  ====================================================== */
+  /* ================= LOAD DATA ================= */
   useEffect(() => {
     const load = async () => {
       try {
-        // Fetch user document
         const userSnap = await getDoc(doc(db, "users", uid));
         const userData = userSnap.data();
-
         setUserInfo(userData);
         setName(userData.name);
 
-        // Fetch test attempts
         const q = query(
           collection(db, "results"),
           where("userId", "==", uid)
@@ -110,11 +71,7 @@ const Profile = () => {
         }));
         setResults(resultsData);
 
-        // Fetch only required tests
-        const testIds = [
-          ...new Set(resultsData.map((r) => r.testId)),
-        ];
-
+        const testIds = [...new Set(resultsData.map((r) => r.testId))];
         const map = {};
         for (let id of testIds) {
           const snap = await getDoc(doc(db, "tests", id));
@@ -132,15 +89,9 @@ const Profile = () => {
     load();
   }, [uid, navigate]);
 
-  /* ======================================================
-     PROFILE UPDATE (NAME)
-     ------------------------------------------------------
-     - Updates Firestore
-     - Syncs local state
-  ====================================================== */
+  /* ================= PROFILE UPDATE ================= */
   const saveProfile = async () => {
     if (!name.trim()) return;
-
     try {
       setSaving(true);
       await updateDoc(doc(db, "users", uid), { name });
@@ -151,23 +102,33 @@ const Profile = () => {
     }
   };
 
-  /* ======================================================
-     AVATAR REGENERATION
-     ------------------------------------------------------
-     - Generates a random avatar URL
-     - Saves it to Firestore
-  ====================================================== */
+  /* ================= AVATAR ================= */
   const regenerateAvatar = async () => {
     const avatar = generateAvatarUrl(name + Date.now());
     await updateDoc(doc(db, "users", uid), { avatar });
     setUserInfo((u) => ({ ...u, avatar }));
   };
 
-  /* ======================================================
-     LOADING STATE
-     ------------------------------------------------------
-     - Prevents rendering broken UI
-  ====================================================== */
+  /* ================= CERTIFICATE ENSURE ================= */
+  const ensureCertificateExists = async (result) => {
+    const certRef = doc(db, "certificates", result.id);
+    const snap = await getDoc(certRef);
+    if (snap.exists()) return;
+
+    await setDoc(certRef, {
+      resultId: result.id,
+      userId: uid,
+      testId: result.testId,
+      certificateType: result.certificateEarned,
+      percentage: Number(
+        ((result.score / result.total) * 100).toFixed(2)
+      ),
+      issuedAt: serverTimestamp(),
+      verified: true,
+    });
+  };
+
+  /* ================= LOADING ================= */
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -176,24 +137,16 @@ const Profile = () => {
     );
   }
 
-  /* ======================================================
-     ANALYTICS (DERIVED STATE)
-     ------------------------------------------------------
-     - No DB writes
-     - Computed from results only
-  ====================================================== */
+  /* ================= ANALYTICS ================= */
   const totalTests = results.length;
   const totalScore = results.reduce((s, r) => s + r.score, 0);
   const totalQuestions = results.reduce((s, r) => s + r.total, 0);
-
   const avgPercentage =
     totalQuestions > 0
       ? ((totalScore / totalQuestions) * 100).toFixed(2)
       : 0;
 
-  /* ======================================================
-     RENDER
-  ====================================================== */
+  /* ================= RENDER ================= */
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-5xl mx-auto bg-white p-6 rounded-xl shadow">
@@ -260,9 +213,9 @@ const Profile = () => {
           <Stat label="Total Score" value={totalScore} />
         </div>
 
-        {/* CERTIFICATES */}
+        {/* RESULTS & CERTIFICATES */}
         <h2 className="text-xl font-semibold mb-4">
-          Certificates
+          Test Results
         </h2>
 
         <div className="space-y-4">
@@ -271,24 +224,42 @@ const Profile = () => {
             const tier = r.certificateEarned;
             const cert = tier && test?.certificate?.[tier];
 
+            /* ================= FAILED CASE ================= */
             if (!tier) {
               return (
-                <div key={r.id} className="border p-4 rounded-lg">
-                  <p className="font-semibold">{test?.title}</p>
-                  <p className="text-sm text-red-600">
-                    ❌ Not eligible for certificate
+                <div
+                  key={r.id}
+                  className="border p-4 rounded-lg bg-white"
+                >
+                  <p className="font-semibold">
+                    {test?.title}
                   </p>
+
+                  <p className="text-sm text-gray-600">
+                    Score: {r.score}/{r.total}
+                  </p>
+
+                  {/* 🔁 Try Again */}
+                  <div className="mt-2">
+                    <RetakeRequestButton
+                        result={r}
+                        user={userInfo}
+                    />
+                </div>
                 </div>
               );
             }
 
+            /* ================= PASSED CASE ================= */
             return (
               <div
                 key={r.id}
-                className="border p-4 rounded-lg flex justify-between items-center"
+                className="border p-4 rounded-lg flex justify-between items-center bg-white"
               >
                 <div>
-                  <p className="font-semibold">{test?.title}</p>
+                  <p className="font-semibold">
+                    {test?.title}
+                  </p>
                   <p className="text-sm">
                     {CERTIFICATE_META[tier].icon}{" "}
                     {CERTIFICATE_META[tier].label}
@@ -306,18 +277,24 @@ const Profile = () => {
                 </div>
 
                 <button
-                  onClick={() => {
+                  onClick={async () => {
                     if (cert?.isPaid) {
-                      setSelectedCert({ cert, result: r, test });
+                      setSelectedCert({
+                        cert,
+                        result: r,
+                        test,
+                      });
                       setShowPaymentPopup(true);
                     } else {
+                      await ensureCertificateExists(r);
                       generateCertificate({
                         studentName: userInfo.name,
                         testTitle: test.title,
                         score: r.score,
                         total: r.total,
                         percentage: (
-                          (r.score / r.total) * 100
+                          (r.score / r.total) *
+                          100
                         ).toFixed(2),
                         issuedDate: new Date(
                           r.submittedAt.seconds * 1000
@@ -332,7 +309,9 @@ const Profile = () => {
                       : "bg-green-600"
                   }`}
                 >
-                  {cert?.isPaid ? "Unlock" : "Download"}
+                  {cert?.isPaid
+                    ? "Unlock"
+                    : "Download"}
                 </button>
               </div>
             );
@@ -358,7 +337,9 @@ const Profile = () => {
             </p>
             <div className="flex justify-center gap-3">
               <button
-                onClick={() => setShowPaymentPopup(false)}
+                onClick={() =>
+                  setShowPaymentPopup(false)
+                }
                 className="px-4 py-2 bg-gray-300 rounded"
               >
                 Close
@@ -377,13 +358,7 @@ const Profile = () => {
   );
 };
 
-/**
- * Stat Component
- *
- * PURPOSE:
- * - Displays a single numeric metric
- * - Used only inside Profile.jsx
- */
+/* ================= STAT ================= */
 const Stat = ({ label, value }) => (
   <div className="border p-4 rounded text-center">
     <p className="text-gray-500">{label}</p>

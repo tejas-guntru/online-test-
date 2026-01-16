@@ -1,74 +1,117 @@
 // ==================== REACT CORE ====================
-// useState → to manage Certificate ID input
+// useState    → manages Certificate ID input state
 import { useState } from "react";
 
 // ==================== ROUTING ====================
-// useNavigate → programmatic navigation to verification page
+// useNavigate → redirects user to verification page
 import { useNavigate } from "react-router-dom";
 
 /**
  * CertificateVerificationBox Component
  *
  * PURPOSE:
- * - Allows ANY user (public feature) to verify a certificate
- * - Redirects to a verification page using Certificate ID
+ * - Public entry point for certificate verification
+ * - Accepts a Certificate ID from user
+ * - Redirects to verification page (/verify/:certificateId)
  *
- * WHY THIS FEATURE MATTERS:
- * - Prevents fake certificates
- * - Adds trust & credibility to your platform
- * - Can be used by employers, institutions, or third parties
+ * DESIGN GOALS:
+ * - Simple and trustworthy UI
+ * - Works for employers, colleges, recruiters
+ * - No login required
  */
 const CertificateVerificationBox = () => {
-  // Router navigation handler
   const navigate = useNavigate();
 
-  // Stores the entered Certificate ID
+  // Stores user-entered Certificate ID
   const [certId, setCertId] = useState("");
+
+  // Optional UX feedback for empty input
+  const [error, setError] = useState("");
 
   /**
    * handleVerify
    *
-   * Triggered when user clicks "Verify"
-   * - Trims input
+   * - Trims whitespace
    * - Prevents empty submission
-   * - Redirects to verification page
+   * - Navigates to verification page
    */
   const handleVerify = () => {
-    if (!certId.trim()) return;
-    navigate(`/verify/${certId.trim()}`);
+    const trimmedId = certId.trim();
+
+    if (!trimmedId) {
+      setError("Please enter a valid Certificate ID");
+      return;
+    }
+
+    setError("");
+    navigate(`/verify/${trimmedId}`);
+  };
+
+  /**
+   * handleKeyDown
+   *
+   * - Allows pressing Enter to verify
+   * - Improves accessibility & UX
+   */
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleVerify();
+    }
   };
 
   return (
-    <div className="bg-white p-5 rounded-xl shadow mb-6">
+    <div className="bg-white p-6 rounded-xl shadow-md mb-6 border">
+
       {/* ================= HEADER ================= */}
-      <h2 className="text-lg font-semibold mb-2">
+      <h2 className="text-xl font-semibold mb-1 flex items-center gap-2">
         🔐 Verify Certificate
       </h2>
 
       {/* ================= DESCRIPTION ================= */}
-      <p className="text-sm text-gray-600 mb-3">
-        Enter a Certificate ID to verify its authenticity.
+      <p className="text-sm text-gray-600 mb-4">
+        Enter a Certificate ID to check whether the certificate is authentic.
       </p>
 
       {/* ================= INPUT & ACTION ================= */}
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
+
         {/* Certificate ID Input */}
         <input
           type="text"
-          placeholder="Enter Certificate ID"
+          placeholder="e.g. 1sAER98nVDbbkeuoTxdl"
           value={certId}
-          onChange={(e) => setCertId(e.target.value)}
-          className="border p-2 rounded flex-1"
+          onChange={(e) => {
+            setCertId(e.target.value);
+            setError("");
+          }}
+          onKeyDown={handleKeyDown}
+          className={`border p-3 rounded flex-1 focus:outline-none focus:ring-2 ${
+            error
+              ? "border-red-400 focus:ring-red-300"
+              : "focus:ring-blue-300"
+          }`}
         />
 
         {/* Verify Button */}
         <button
           onClick={handleVerify}
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
+          className="bg-blue-600 text-white px-6 py-3 rounded font-medium hover:bg-blue-700 transition"
         >
           Verify
         </button>
       </div>
+
+      {/* ================= ERROR MESSAGE ================= */}
+      {error && (
+        <p className="text-sm text-red-600 mt-2">
+          {error}
+        </p>
+      )}
+
+      {/* ================= TRUST FOOTER ================= */}
+      <p className="text-xs text-gray-500 mt-4">
+        🔎 Verification is public and does not require login.
+      </p>
     </div>
   );
 };

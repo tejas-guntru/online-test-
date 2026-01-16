@@ -1,4 +1,7 @@
+// ==================== REACT ====================
 import { useEffect, useState } from "react";
+
+// ==================== FIREBASE ====================
 import { auth, db } from "../firebase";
 import {
   collection,
@@ -18,16 +21,12 @@ import {
    ✔ View all tests (grid / list)
    ✔ Activate / revoke tests
    ✔ Delete tests (via modal)
-
-   INTENTIONALLY DOES NOT:
-   ✘ Edit test content after creation
-   ✘ Manage questions after creation
-   ✘ Modify questions once test exists
+   ✔ Approve "Try Again" (retake) requests  ✅ NEW
 
    DESIGN GOAL:
    - Keep test data immutable after creation
    - Protect result integrity
-   - Keep admin workflow simple & predictable
+   - Centralized admin control
 ===================================================== */
 
 /* ================= UI COMPONENTS ================= */
@@ -39,17 +38,17 @@ import TestGrid from "../components/admin/TestGrid";
 import TestList from "../components/admin/TestList";
 import EditTestModal from "../components/admin/EditTestModal";
 
+// 🔁 Try Again (Retake) admin panel
+import RetakeRequests from "../components/admin/RetakeRequests";
+
 const Admin = () => {
   /* =====================================================
      STEP CONTROL
-     step = 1 → Test metadata
-     step = 2 → Questions input
   ===================================================== */
   const [step, setStep] = useState(1);
 
   /* =====================================================
      TEST CREATION STATE
-     (Used only during test creation flow)
   ===================================================== */
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -58,7 +57,6 @@ const Admin = () => {
 
   /* =====================================================
      CERTIFICATE CONFIGURATION
-     Stored directly inside the test document
   ===================================================== */
   const [certificate, setCertificate] = useState({
     enabled: true,
@@ -83,31 +81,24 @@ const Admin = () => {
   });
 
   /* =====================================================
-     QUESTIONS (TEMPORARY STATE)
-     - Exists only during creation
-     - Persisted to Firestore on submit
+     QUESTIONS (CREATION PHASE ONLY)
   ===================================================== */
   const [questions, setQuestions] = useState([]);
 
   /* =====================================================
      TEST MANAGEMENT DATA
-     - tests: all tests in Firestore
-     - attemptCounts: derived from results collection
   ===================================================== */
   const [tests, setTests] = useState([]);
   const [attemptCounts, setAttemptCounts] = useState({});
 
   /* =====================================================
      UI STATE
-     - viewMode: grid or list view
-     - editingTest: test currently opened in modal
   ===================================================== */
-  const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
+  const [viewMode, setViewMode] = useState("grid");
   const [editingTest, setEditingTest] = useState(null);
 
   /* =====================================================
      FETCH ALL TESTS (REAL-TIME)
-     Keeps admin view in sync with Firestore
   ===================================================== */
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "tests"), (snap) => {
@@ -118,7 +109,6 @@ const Admin = () => {
 
   /* =====================================================
      FETCH ATTEMPT COUNTS (REAL-TIME)
-     Aggregates attempts per test from results
   ===================================================== */
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "results"), (snap) => {
@@ -134,7 +124,6 @@ const Admin = () => {
 
   /* =====================================================
      STEP 1 → GENERATE QUESTIONS
-     Initializes empty questions array based on count
   ===================================================== */
   const generateQuestions = () => {
     if (!title || !duration || questionCount <= 0) {
@@ -153,7 +142,7 @@ const Admin = () => {
   };
 
   /* =====================================================
-     QUESTION EDITING (CREATION PHASE ONLY)
+     QUESTION EDITING
   ===================================================== */
   const updateQuestion = (qi, field, value) => {
     const copy = [...questions];
@@ -169,8 +158,6 @@ const Admin = () => {
 
   /* =====================================================
      CREATE TEST (FINAL SUBMIT)
-     - Creates test document
-     - Creates all related questions
   ===================================================== */
   const submitTest = async () => {
     try {
@@ -197,7 +184,7 @@ const Admin = () => {
 
       alert("Test created successfully");
 
-      /* RESET CREATION FLOW */
+      // Reset creation flow
       setStep(1);
       setTitle("");
       setDescription("");
@@ -212,7 +199,6 @@ const Admin = () => {
 
   /* =====================================================
      ACTIVATE / REVOKE TEST
-     Controls student visibility
   ===================================================== */
   const toggleTest = async (id, status) => {
     await updateDoc(doc(db, "tests", id), {
@@ -266,7 +252,6 @@ const Admin = () => {
             Manage Tests
           </h2>
 
-          {/* View toggle */}
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode("grid")}
@@ -318,6 +303,16 @@ const Admin = () => {
             onClose={() => setEditingTest(null)}
           />
         )}
+
+        {/* ================= TRY AGAIN REQUESTS (NEW) ================= */}
+        <div className="bg-white rounded-xl shadow p-6">
+          <h2 className="text-2xl font-semibold mb-4">
+            🔁 Try Again Requests
+          </h2>
+
+          <RetakeRequests />
+        </div>
+
       </div>
     </div>
   );
