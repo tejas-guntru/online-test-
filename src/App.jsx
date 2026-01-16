@@ -1,61 +1,35 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-/* ================= PUBLIC PAGES =================
-   Accessible without authentication */
+/* ================= PUBLIC PAGES ================= */
 import Login from "./pages/Login";
 import VerifyCertificate from "./pages/VerifyCertificate";
 
-/* ================= STUDENT PAGES =================
-   Requires user to be authenticated */
+/* ================= STUDENT PAGES ================= */
 import Dashboard from "./pages/Dashboard";
 import Test from "./pages/Test";
 import Result from "./pages/Result";
 import Profile from "./pages/Profile";
 
-/* ================= ADMIN PAGES =================
-   Requires authenticated admin role */
+/* ================= ADMIN PAGES ================= */
 import Admin from "./pages/Admin";
-import ManageQuestions from "./pages/ManageQuestions";
 
-/* ================= ROUTE GUARDS =================
-   Security layers for authentication & authorization */
+/* ================= ROUTE GUARDS ================= */
 import ProtectedRoute from "./components/ProtectedRoute";
 import AdminRoute from "./components/AdminRoute";
 
-/**
- * App Component
- *
- * PURPOSE:
- * - Central routing configuration
- * - Defines public, student, and admin routes
- * - Applies route guards for security
- *
- * SECURITY MODEL:
- * - ProtectedRoute → ensures user is logged in
- * - AdminRoute     → ensures user has admin role
- */
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* =====================================================
-            🌐 PUBLIC ROUTES
-        ===================================================== */}
-
-        {/* Login / Entry point */}
+        {/* Public */}
         <Route path="/" element={<Login />} />
-
-        {/* 🔐 Public certificate verification */}
         <Route
           path="/verify/:certificateId"
           element={<VerifyCertificate />}
         />
 
-        {/* =====================================================
-            🎓 STUDENT ROUTES
-        ===================================================== */}
-
+        {/* Student */}
         <Route
           path="/dashboard"
           element={
@@ -64,7 +38,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/test/:id"
           element={
@@ -73,7 +46,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/result"
           element={
@@ -82,7 +54,6 @@ function App() {
             </ProtectedRoute>
           }
         />
-
         <Route
           path="/profile"
           element={
@@ -92,28 +63,13 @@ function App() {
           }
         />
 
-        {/* =====================================================
-            🛠️ ADMIN ROUTES
-        ===================================================== */}
-
+        {/* Admin */}
         <Route
           path="/admin"
           element={
             <ProtectedRoute>
               <AdminRoute>
                 <Admin />
-              </AdminRoute>
-            </ProtectedRoute>
-          }
-        />
-
-        {/* OPTIONAL / LEGACY (safe to delete if unused) */}
-        <Route
-          path="/admin/tests/:testId/questions"
-          element={
-            <ProtectedRoute>
-              <AdminRoute>
-                <ManageQuestions />
               </AdminRoute>
             </ProtectedRoute>
           }
