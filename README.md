@@ -281,4 +281,4 @@ Architecture	⭐⭐⭐⭐⭐
 Data integrity	⭐⭐⭐⭐⭐
 Scalability	⭐⭐⭐⭐
 Security	⭐⭐⭐⭐⭐
-Maintainability	⭐⭐⭐⭐⭐
+Maintainability	⭐⭐⭐⭐
