@@ -13,23 +13,48 @@ import {
 } from "firebase/firestore";
 import { decideCertificate } from "../utils/certificateDecision";
 
+/**
+ * Test Component
+ *
+ * PURPOSE:
+ * - Allows a student to ATTEMPT a test
+ * - Fetches test metadata + questions from Firestore
+ * - Handles timer countdown
+ * - Collects answers
+ * - Calculates score & percentage
+ * - Decides certificate eligibility
+ * - Saves result to Firestore
+ *
+ * ROUTE:
+ * /test/:id
+ *
+ * USED BY:
+ * - Student Dashboard → Start Test
+ */
+
 const Test = () => {
-  const { id: testId } = useParams();
+  /* ================= ROUTING ================= */
+  const { id: testId } = useParams();   // Test ID from URL
   const navigate = useNavigate();
 
-  const [test, setTest] = useState(null);
-  const [questions, setQuestions] = useState([]);
-  const [answers, setAnswers] = useState({});
-  const [timeLeft, setTimeLeft] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [submitting, setSubmitting] = useState(false);
+  /* ================= STATE ================= */
+  const [test, setTest] = useState(null);          // Test metadata
+  const [questions, setQuestions] = useState([]);  // Questions list
+  const [answers, setAnswers] = useState({});      // questionId → optionIndex
+  const [timeLeft, setTimeLeft] = useState(0);     // Remaining time (seconds)
+  const [loading, setLoading] = useState(true);    // Initial load state
+  const [submitting, setSubmitting] = useState(false); // Prevent double submit
 
-  /* ================= FETCH TEST & QUESTIONS ================= */
+  /* ================= FETCH TEST & QUESTIONS =================
+     - Fetches test document
+     - Fetches all questions linked to this test
+     - Initializes timer based on test duration */
   useEffect(() => {
     const loadTest = async () => {
       try {
-        // Fetch test
+        /* Fetch test metadata */
         const testSnap = await getDoc(doc(db, "tests", testId));
+
         if (!testSnap.exists()) {
           alert("Test not found");
           navigate("/dashboard");
@@ -38,9 +63,11 @@ const Test = () => {
 
         const testData = testSnap.data();
         setTest(testData);
+
+        /* Initialize timer (minutes → seconds) */
         setTimeLeft(testData.duration * 60);
 
-        // Fetch questions
+        /* Fetch test questions */
         const q = query(
           collection(db, "questions"),
           where("testId", "==", testId)
@@ -64,12 +91,15 @@ const Test = () => {
     loadTest();
   }, [testId, navigate]);
 
-  /* ================= TIMER ================= */
+  /* ================= TIMER LOGIC =================
+     - Runs every second
+     - Auto-submits test when time reaches zero
+     - Stops when submitting */
   useEffect(() => {
     if (loading || submitting) return;
 
     if (timeLeft <= 0) {
-      handleSubmit();
+      handleSubmit(); // Auto-submit on timeout
       return;
     }
 
@@ -80,7 +110,8 @@ const Test = () => {
     return () => clearInterval(timer);
   }, [timeLeft, loading, submitting]);
 
-  /* ================= ANSWER SELECT ================= */
+  /* ================= ANSWER SELECTION =================
+     Stores user's selected option per question */
   const selectAnswer = (qId, optionIndex) => {
     setAnswers((prev) => ({
       ...prev,
@@ -88,34 +119,36 @@ const Test = () => {
     }));
   };
 
-  /* ================= SUBMIT TEST ================= */
+  /* ================= SUBMIT TEST =================
+     - Calculates score
+     - Calculates percentage
+     - Decides certificate eligibility
+     - Saves result in Firestore
+     - Redirects to Result page */
   const handleSubmit = async () => {
-    if (submitting) return;
+    if (submitting) return; // Prevent double submit
     setSubmitting(true);
 
     try {
       let score = 0;
 
+      /* Calculate score */
       questions.forEach((q) => {
-        if (
-          answers[q.id] === q.correctOptionIndex
-        ) {
+        if (answers[q.id] === q.correctOptionIndex) {
           score++;
         }
       });
 
       const total = questions.length;
-      const percentage = Math.round(
-        (score / total) * 100
-      );
+      const percentage = Math.round((score / total) * 100);
 
-      // 🎓 DECIDE CERTIFICATE
+      /* Decide certificate based on percentage */
       const certificateEarned = decideCertificate({
         percentage,
         certificateConfig: test.certificate,
       });
 
-      // SAVE RESULT
+      /* Save result to Firestore */
       await addDoc(collection(db, "results"), {
         userId: auth.currentUser.uid,
         testId,
@@ -124,13 +157,12 @@ const Test = () => {
         percentage,
 
         certificateEarned, // completion | merit | excellence | null
-        certificateStatus: certificateEarned
-          ? "available"
-          : "none",
+        certificateStatus: certificateEarned ? "available" : "none",
 
         submittedAt: serverTimestamp(),
       });
 
+      /* Redirect to result page */
       navigate("/result", {
         state: {
           score,
@@ -146,6 +178,7 @@ const Test = () => {
     }
   };
 
+  /* ================= LOADING STATE ================= */
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -158,21 +191,20 @@ const Test = () => {
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow">
 
-        {/* HEADER */}
+        {/* ================= HEADER ================= */}
         <div className="flex justify-between items-center mb-6">
           <h1 className="text-2xl font-bold">
             {test.title}
           </h1>
+
+          {/* TIMER DISPLAY */}
           <span className="text-red-600 font-semibold">
             ⏱ {Math.floor(timeLeft / 60)}:
-            {String(timeLeft % 60).padStart(
-              2,
-              "0"
-            )}
+            {String(timeLeft % 60).padStart(2, "0")}
           </span>
         </div>
 
-        {/* QUESTIONS */}
+        {/* ================= QUESTIONS ================= */}
         <div className="space-y-6">
           {questions.map((q, index) => (
             <div
@@ -196,9 +228,7 @@ const Test = () => {
                     <input
                       type="radio"
                       name={q.id}
-                      checked={
-                        answers[q.id] === oi
-                      }
+                      checked={answers[q.id] === oi}
                       onChange={() =>
                         selectAnswer(q.id, oi)
                       }
@@ -211,16 +241,14 @@ const Test = () => {
           ))}
         </div>
 
-        {/* SUBMIT */}
+        {/* ================= SUBMIT BUTTON ================= */}
         <div className="mt-8 text-center">
           <button
             onClick={handleSubmit}
             disabled={submitting}
             className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50"
           >
-            {submitting
-              ? "Submitting..."
-              : "Submit Test"}
+            {submitting ? "Submitting..." : "Submit Test"}
           </button>
         </div>
       </div>

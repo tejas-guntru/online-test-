@@ -9,7 +9,28 @@ import {
   doc,
 } from "firebase/firestore";
 
-// Components
+/* =====================================================
+   ADMIN COMPONENT
+
+   RESPONSIBILITIES:
+   ✔ Create tests (metadata + questions)
+   ✔ Define certificate rules
+   ✔ View all tests (grid / list)
+   ✔ Activate / revoke tests
+   ✔ Delete tests (via modal)
+
+   INTENTIONALLY DOES NOT:
+   ✘ Edit test content after creation
+   ✘ Manage questions after creation
+   ✘ Modify questions once test exists
+
+   DESIGN GOAL:
+   - Keep test data immutable after creation
+   - Protect result integrity
+   - Keep admin workflow simple & predictable
+===================================================== */
+
+/* ================= UI COMPONENTS ================= */
 import AdminHeader from "../components/admin/AdminHeader";
 import StepIndicator from "../components/admin/StepIndicator";
 import CreateTestForm from "../components/admin/CreateTestForm";
@@ -19,16 +40,26 @@ import TestList from "../components/admin/TestList";
 import EditTestModal from "../components/admin/EditTestModal";
 
 const Admin = () => {
-  /* ================= STEP CONTROL ================= */
+  /* =====================================================
+     STEP CONTROL
+     step = 1 → Test metadata
+     step = 2 → Questions input
+  ===================================================== */
   const [step, setStep] = useState(1);
 
-  /* ================= TEST BASIC INFO ================= */
+  /* =====================================================
+     TEST CREATION STATE
+     (Used only during test creation flow)
+  ===================================================== */
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [duration, setDuration] = useState("");
   const [questionCount, setQuestionCount] = useState(0);
 
-  /* ================= CERTIFICATE CONFIG ================= */
+  /* =====================================================
+     CERTIFICATE CONFIGURATION
+     Stored directly inside the test document
+  ===================================================== */
   const [certificate, setCertificate] = useState({
     enabled: true,
     completion: {
@@ -51,20 +82,33 @@ const Admin = () => {
     },
   });
 
-  /* ================= QUESTIONS ================= */
+  /* =====================================================
+     QUESTIONS (TEMPORARY STATE)
+     - Exists only during creation
+     - Persisted to Firestore on submit
+  ===================================================== */
   const [questions, setQuestions] = useState([]);
 
-  /* ================= TEST LIST ================= */
+  /* =====================================================
+     TEST MANAGEMENT DATA
+     - tests: all tests in Firestore
+     - attemptCounts: derived from results collection
+  ===================================================== */
   const [tests, setTests] = useState([]);
-
-  /* ================= ANALYTICS ================= */
   const [attemptCounts, setAttemptCounts] = useState({});
 
-  /* ================= UI STATE ================= */
-  const [viewMode, setViewMode] = useState("grid"); // grid | list
+  /* =====================================================
+     UI STATE
+     - viewMode: grid or list view
+     - editingTest: test currently opened in modal
+  ===================================================== */
+  const [viewMode, setViewMode] = useState("grid"); // "grid" | "list"
   const [editingTest, setEditingTest] = useState(null);
 
-  /* ================= FETCH TESTS ================= */
+  /* =====================================================
+     FETCH ALL TESTS (REAL-TIME)
+     Keeps admin view in sync with Firestore
+  ===================================================== */
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "tests"), (snap) => {
       setTests(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
@@ -72,7 +116,10 @@ const Admin = () => {
     return unsub;
   }, []);
 
-  /* ================= FETCH ATTEMPT COUNTS ================= */
+  /* =====================================================
+     FETCH ATTEMPT COUNTS (REAL-TIME)
+     Aggregates attempts per test from results
+  ===================================================== */
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "results"), (snap) => {
       const counts = {};
@@ -85,7 +132,10 @@ const Admin = () => {
     return unsub;
   }, []);
 
-  /* ================= STEP 1 → GENERATE QUESTIONS ================= */
+  /* =====================================================
+     STEP 1 → GENERATE QUESTIONS
+     Initializes empty questions array based on count
+  ===================================================== */
   const generateQuestions = () => {
     if (!title || !duration || questionCount <= 0) {
       return alert("Fill all required fields");
@@ -102,7 +152,9 @@ const Admin = () => {
     setStep(2);
   };
 
-  /* ================= QUESTION EDITING ================= */
+  /* =====================================================
+     QUESTION EDITING (CREATION PHASE ONLY)
+  ===================================================== */
   const updateQuestion = (qi, field, value) => {
     const copy = [...questions];
     copy[qi][field] = value;
@@ -115,7 +167,11 @@ const Admin = () => {
     setQuestions(copy);
   };
 
-  /* ================= CREATE TEST ================= */
+  /* =====================================================
+     CREATE TEST (FINAL SUBMIT)
+     - Creates test document
+     - Creates all related questions
+  ===================================================== */
   const submitTest = async () => {
     try {
       const testRef = await addDoc(collection(db, "tests"), {
@@ -124,11 +180,12 @@ const Admin = () => {
         duration: Number(duration),
         totalQuestions: questionCount,
         isActive: true,
-        certificate, // 🔥 FULL CERTIFICATE STRUCTURE
+        certificate,
         createdBy: auth.currentUser.uid,
         createdAt: serverTimestamp(),
       });
 
+      // Persist questions
       for (let q of questions) {
         await addDoc(collection(db, "questions"), {
           testId: testRef.id,
@@ -140,68 +197,43 @@ const Admin = () => {
 
       alert("Test created successfully");
 
-      /* RESET */
+      /* RESET CREATION FLOW */
       setStep(1);
       setTitle("");
       setDescription("");
       setDuration("");
       setQuestionCount(0);
       setQuestions([]);
-      setCertificate({
-        enabled: true,
-        completion: {
-          enabled: true,
-          minPercentage: 40,
-          isPaid: false,
-          price: 0,
-        },
-        merit: {
-          enabled: true,
-          minPercentage: 60,
-          isPaid: true,
-          price: 99,
-        },
-        excellence: {
-          enabled: true,
-          minPercentage: 85,
-          isPaid: true,
-          price: 199,
-        },
-      });
     } catch (err) {
       console.error(err);
       alert("Failed to create test");
     }
   };
 
-  /* ================= ACTIVATE / REVOKE ================= */
+  /* =====================================================
+     ACTIVATE / REVOKE TEST
+     Controls student visibility
+  ===================================================== */
   const toggleTest = async (id, status) => {
     await updateDoc(doc(db, "tests", id), {
       isActive: !status,
     });
   };
 
-  /* ================= UPDATE TEST (FROM MODAL) ================= */
-  const updateTest = async (id, data) => {
-    try {
-      await updateDoc(doc(db, "tests", id), data);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to update test");
-    }
-  };
-
+  /* =====================================================
+     RENDER
+  ===================================================== */
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
       <div className="max-w-7xl mx-auto space-y-10">
 
-        {/* HEADER */}
+        {/* Top navigation */}
         <AdminHeader />
 
-        {/* STEP INDICATOR */}
+        {/* Creation step indicator */}
         <StepIndicator step={step} />
 
-        {/* CREATE TEST */}
+        {/* STEP 1: Test metadata */}
         {step === 1 && (
           <CreateTestForm
             title={title}
@@ -218,6 +250,7 @@ const Admin = () => {
           />
         )}
 
+        {/* STEP 2: Questions */}
         {step === 2 && (
           <QuestionsForm
             questions={questions}
@@ -227,12 +260,13 @@ const Admin = () => {
           />
         )}
 
-        {/* VIEW TOGGLE */}
+        {/* TEST MANAGEMENT HEADER */}
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold">
             Manage Tests
           </h2>
 
+          {/* View toggle */}
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode("grid")}
@@ -277,15 +311,11 @@ const Admin = () => {
           />
         )}
 
-        {/* EDIT MODAL */}
+        {/* READ + DELETE MODAL */}
         {editingTest && (
           <EditTestModal
             test={editingTest}
             onClose={() => setEditingTest(null)}
-            onSave={(id, data) => {
-              updateTest(id, data);
-              setEditingTest(null);
-            }}
           />
         )}
       </div>

@@ -12,6 +12,17 @@ import {
   getDoc,
 } from "firebase/firestore";
 
+/**
+ * CERTIFICATE_META
+ *
+ * PURPOSE:
+ * - UI-only metadata for certificate display
+ * - Maps certificate tier → label & icon
+ *
+ * NOTE:
+ * - This does NOT affect certificate logic
+ * - Actual eligibility is decided earlier (Test.jsx)
+ */
 const CERTIFICATE_META = {
   completion: {
     label: "Completion Certificate",
@@ -27,18 +38,47 @@ const CERTIFICATE_META = {
   },
 };
 
+/**
+ * Result Component
+ *
+ * PURPOSE:
+ * - Shows the MOST RECENT test result of the logged-in user
+ * - Displays:
+ *   • Score summary
+ *   • Certificate eligibility status
+ *   • Full question-by-question review
+ *
+ * ROUTE:
+ * /result
+ *
+ * DATA SOURCE:
+ * - results (latest by submittedAt)
+ * - tests (test metadata)
+ * - questions (for review)
+ *
+ * IMPORTANT DESIGN CHOICE:
+ * - Result page is READ-ONLY
+ * - No reattempt, no edits, no re-calculation
+ */
 const Result = () => {
   const navigate = useNavigate();
 
-  const [loading, setLoading] = useState(true);
-  const [result, setResult] = useState(null);
-  const [questions, setQuestions] = useState([]);
-  const [test, setTest] = useState(null);
+  /* ================= STATE ================= */
+  const [loading, setLoading] = useState(true); // Page loading flag
+  const [result, setResult] = useState(null);   // Latest result document
+  const [questions, setQuestions] = useState([]); // Test questions
+  const [test, setTest] = useState(null);       // Test metadata
 
+  /* ================= LOAD RESULT + RELATED DATA =================
+     Flow:
+     1️⃣ Fetch latest result of current user
+     2️⃣ Fetch test metadata for that result
+     3️⃣ Fetch all questions of that test
+  */
   useEffect(() => {
     const fetchResultAndQuestions = async () => {
       try {
-        /* 1️⃣ Latest result */
+        /* 1️⃣ Fetch latest result */
         const resultQuery = query(
           collection(db, "results"),
           where("userId", "==", auth.currentUser.uid),
@@ -47,6 +87,8 @@ const Result = () => {
         );
 
         const resultSnap = await getDocs(resultQuery);
+
+        // If user has no results, redirect safely
         if (resultSnap.empty) {
           navigate("/dashboard");
           return;
@@ -58,13 +100,13 @@ const Result = () => {
         };
         setResult(resultData);
 
-        /* 2️⃣ Test info */
+        /* 2️⃣ Fetch test metadata */
         const testSnap = await getDoc(
           doc(db, "tests", resultData.testId)
         );
         setTest(testSnap.data());
 
-        /* 3️⃣ Questions */
+        /* 3️⃣ Fetch questions for review */
         const questionsQuery = query(
           collection(db, "questions"),
           where("testId", "==", resultData.testId)
@@ -88,6 +130,7 @@ const Result = () => {
     fetchResultAndQuestions();
   }, [navigate]);
 
+  /* ================= LOADING STATE ================= */
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -96,7 +139,8 @@ const Result = () => {
     );
   }
 
-  const tier = result.certificateEarned;
+  /* ================= CERTIFICATE INFO ================= */
+  const tier = result.certificateEarned; // completion | merit | excellence | null
   const certConfig =
     tier && test?.certificate?.[tier];
 
@@ -104,11 +148,12 @@ const Result = () => {
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow">
 
-        {/* HEADER */}
+        {/* ================= HEADER ================= */}
         <h1 className="text-2xl font-bold mb-2">
           Test Result Review
         </h1>
 
+        {/* SCORE SUMMARY */}
         <p className="mb-6">
           Score:{" "}
           <strong>
@@ -116,9 +161,10 @@ const Result = () => {
           </strong>
         </p>
 
-        {/* CERTIFICATE STATUS */}
+        {/* ================= CERTIFICATE STATUS ================= */}
         <div className="mb-8 p-4 border rounded-lg">
           {!tier ? (
+            /* Not eligible for certificate */
             <p className="text-red-600 font-semibold">
               ❌ Not eligible for certificate
             </p>
@@ -129,10 +175,10 @@ const Result = () => {
                 {CERTIFICATE_META[tier].label}
               </p>
 
+              {/* Paid vs Free certificate */}
               {certConfig?.isPaid ? (
                 <p className="text-yellow-600 text-sm">
-                  💰 Paid Certificate (₹
-                  {certConfig.price})
+                  💰 Paid Certificate (₹{certConfig.price})
                 </p>
               ) : (
                 <p className="text-green-600 text-sm">
@@ -147,7 +193,12 @@ const Result = () => {
           )}
         </div>
 
-        {/* QUESTION REVIEW */}
+        {/* ================= QUESTION REVIEW =================
+           Shows:
+           - Correct answers
+           - User selected answers
+           - Visual distinction (green/red)
+        */}
         {questions.map((q, index) => {
           const userAnswerIndex =
             result.answers?.[q.id];
@@ -187,7 +238,7 @@ const Result = () => {
           );
         })}
 
-        {/* ACTION */}
+        {/* ================= ACTION ================= */}
         <button
           onClick={() => navigate("/dashboard")}
           className="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"

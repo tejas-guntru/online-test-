@@ -1,71 +1,112 @@
-import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  deleteDoc,
+  doc,
+} from "firebase/firestore";
+import { db } from "../../firebase";
 
-const EditTestModal = ({ test, onClose, onSave }) => {
-  const [title, setTitle] = useState(test.title);
-  const [description, setDescription] = useState(
-    test.description || ""
-  );
-  const [duration, setDuration] = useState(test.duration);
-  const [isActive, setIsActive] = useState(test.isActive);
+/**
+ * EditTestModal (Read-Only)
+ *
+ * PURPOSE:
+ * - Displays test details in READ-ONLY mode
+ * - Allows ADMIN to permanently delete a test
+ *
+ * IMPORTANT DESIGN DECISION:
+ * - No editing of test content is allowed here
+ * - No question management
+ * - No updates to title / duration / certificate
+ *
+ * WHY:
+ * - Prevents data inconsistency
+ * - Keeps admin workflow simple & safe
+ * - Test content is immutable after creation
+ *
+ * USED IN:
+ * - Admin.jsx (Grid & List view)
+ *
+ * PROPS:
+ * @param {Object} test    - Full test object from Firestore
+ * @param {Function} onClose - Closes the modal
+ */
+const EditTestModal = ({ test, onClose }) => {
+  const navigate = useNavigate();
 
-  // 🏅 Certificate state (same as CreateTestForm)
-  const [certificate, setCertificate] = useState(
-    test.certificate || {
-      enabled: false,
-      completion: {
-        enabled: true,
-        minPercentage: 40,
-        isPaid: false,
-        price: 0,
-      },
-      merit: {
-        enabled: false,
-        minPercentage: 60,
-        isPaid: true,
-        price: 99,
-      },
-      excellence: {
-        enabled: false,
-        minPercentage: 85,
-        isPaid: true,
-        price: 199,
-      },
+  /**
+   * handleDelete
+   *
+   * PURPOSE:
+   * - Safely deletes a test and ALL related data
+   *
+   * DELETION ORDER (IMPORTANT):
+   * 1. Questions → prevent orphaned documents
+   * 2. Results   → prevent invalid student history
+   * 3. Test      → final removal
+   *
+   * ⚠️ This action is irreversible
+   */
+  const handleDelete = async () => {
+    const confirmDelete = window.confirm(
+      "This will permanently delete:\n\n" +
+        "• The test\n" +
+        "• All its questions\n" +
+        "• All student results\n\n" +
+        "This action cannot be undone.\n\n" +
+        "Continue?"
+    );
+
+    // Abort if admin cancels
+    if (!confirmDelete) return;
+
+    try {
+      /* ================= DELETE QUESTIONS ================= */
+      const questionsQuery = query(
+        collection(db, "questions"),
+        where("testId", "==", test.id)
+      );
+      const questionsSnap = await getDocs(questionsQuery);
+
+      for (const q of questionsSnap.docs) {
+        await deleteDoc(doc(db, "questions", q.id));
+      }
+
+      /* ================= DELETE RESULTS ================= */
+      const resultsQuery = query(
+        collection(db, "results"),
+        where("testId", "==", test.id)
+      );
+      const resultsSnap = await getDocs(resultsQuery);
+
+      for (const r of resultsSnap.docs) {
+        await deleteDoc(doc(db, "results", r.id));
+      }
+
+      /* ================= DELETE TEST ================= */
+      await deleteDoc(doc(db, "tests", test.id));
+
+      alert("Test deleted successfully");
+      onClose();
+    } catch (err) {
+      console.error(err);
+      alert("Failed to delete test");
     }
-  );
-
-  const updateTier = (tier, field, value) => {
-    setCertificate((prev) => ({
-      ...prev,
-      [tier]: {
-        ...prev[tier],
-        [field]: value,
-      },
-    }));
-  };
-
-  const handleSave = () => {
-    if (!title || !duration) {
-      return alert("Required fields missing");
-    }
-
-    onSave(test.id, {
-      title,
-      description,
-      duration: Number(duration),
-      isActive,
-      certificate,
-    });
   };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white p-6 rounded-xl w-full max-w-lg">
 
-        {/* HEADER */}
+        {/* ================= HEADER ================= */}
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold">
-            Edit Test
+            Test Details
           </h2>
+
+          {/* Close modal */}
           <button
             onClick={onClose}
             className="text-gray-500 hover:text-black"
@@ -74,122 +115,73 @@ const EditTestModal = ({ test, onClose, onSave }) => {
           </button>
         </div>
 
-        {/* BASIC INFO */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {/* ================= READ-ONLY TEST DETAILS ================= */}
+        <div className="space-y-3 text-sm">
+          
+          {/* TITLE */}
           <div>
-            <label className="text-sm font-medium">
-              Test Title
-            </label>
-            <input
-              className="border p-3 rounded w-full"
-              value={title}
-              onChange={(e) =>
-                setTitle(e.target.value)
-              }
-            />
+            <p className="text-gray-500">Title</p>
+            <p className="font-medium">{test.title}</p>
           </div>
 
+          {/* DESCRIPTION */}
           <div>
-            <label className="text-sm font-medium">
-              Duration (minutes)
-            </label>
-            <input
-              type="number"
-              className="border p-3 rounded w-full"
-              value={duration}
-              onChange={(e) =>
-                setDuration(e.target.value)
-              }
-            />
+            <p className="text-gray-500">Description</p>
+            <p>{test.description || "No description"}</p>
           </div>
 
-          <div className="md:col-span-2">
-            <label className="text-sm font-medium">
-              Description
-            </label>
-            <textarea
-              className="border p-3 rounded w-full"
-              rows={3}
-              value={description}
-              onChange={(e) =>
-                setDescription(e.target.value)
-              }
-            />
+          {/* DURATION */}
+          <div>
+            <p className="text-gray-500">Duration</p>
+            <p>{test.duration} minutes</p>
           </div>
 
-          <label className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              checked={isActive}
-              onChange={(e) =>
-                setIsActive(e.target.checked)
-              }
-            />
-            Test Active
-          </label>
-        </div>
+          {/* STATUS */}
+          <div>
+            <p className="text-gray-500">Status</p>
+            <p
+              className={`font-semibold ${
+                test.isActive
+                  ? "text-green-600"
+                  : "text-red-600"
+              }`}
+            >
+              {test.isActive ? "Active" : "Revoked"}
+            </p>
+          </div>
 
-        {/* CERTIFICATE SETTINGS */}
-        <div className="border rounded-lg p-5 mb-6">
-          <label className="flex items-center gap-2 mb-4">
-            <input
-              type="checkbox"
-              checked={certificate.enabled}
-              onChange={(e) =>
-                setCertificate((prev) => ({
-                  ...prev,
-                  enabled: e.target.checked,
-                }))
-              }
-            />
-            <span className="font-semibold">
-              Provide Certificates
-            </span>
-          </label>
-
-          {certificate.enabled && (
-            <div className="space-y-6">
-              <CertificateTier
-                title="Completion Certificate"
-                tier={certificate.completion}
-                onChange={(f, v) =>
-                  updateTier("completion", f, v)
-                }
-              />
-
-              <CertificateTier
-                title="Merit Certificate"
-                tier={certificate.merit}
-                onChange={(f, v) =>
-                  updateTier("merit", f, v)
-                }
-              />
-
-              <CertificateTier
-                title="Excellence Certificate"
-                tier={certificate.excellence}
-                onChange={(f, v) =>
-                  updateTier("excellence", f, v)
-                }
+          {/* THUMBNAIL (OPTIONAL) */}
+          {test.thumbnail && (
+            <div>
+              <p className="text-gray-500 mb-1">
+                Thumbnail
+              </p>
+              <img
+                src={test.thumbnail}
+                alt="Thumbnail"
+                className="w-full h-40 object-cover rounded border"
               />
             </div>
           )}
         </div>
 
-        {/* ACTIONS */}
-        <div className="flex justify-between">
+        {/* ================= DANGER ZONE ================= */}
+        <div className="mt-6 pt-4 border-t flex justify-between">
+
+          {/* CLOSE MODAL */}
           <button
             onClick={onClose}
-            className="px-4 py-2 border rounded"
+            className="px-4 py-2 rounded border"
           >
-            Cancel
+            Close
           </button>
 
+          {/* DELETE TEST */}
           <button
-            onClick={handleSave}
-            className="px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            onClick={handleDelete}
+            className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
           >
-            Save Changes
+            Delete Test
           </button>
         </div>
       </div>
@@ -198,81 +190,3 @@ const EditTestModal = ({ test, onClose, onSave }) => {
 };
 
 export default EditTestModal;
-
-/* ================= CERTIFICATE TIER ================= */
-
-const CertificateTier = ({ title, tier, onChange }) => (
-  <div className="border rounded-lg p-4 bg-gray-50">
-    <h4 className="font-semibold mb-3">{title}</h4>
-
-    <label className="flex items-center gap-2 mb-3">
-      <input
-        type="checkbox"
-        checked={tier.enabled}
-        onChange={(e) =>
-          onChange("enabled", e.target.checked)
-        }
-      />
-      Enabled
-    </label>
-
-    {tier.enabled && (
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div>
-          <label className="text-sm font-medium">
-            Min Percentage
-          </label>
-          <input
-            type="number"
-            className="border p-2 rounded w-full"
-            value={tier.minPercentage}
-            onChange={(e) =>
-              onChange(
-                "minPercentage",
-                Number(e.target.value)
-              )
-            }
-          />
-        </div>
-
-        <div>
-          <label className="text-sm font-medium">
-            Pricing
-          </label>
-          <select
-            className="border p-2 rounded w-full"
-            value={tier.isPaid ? "paid" : "free"}
-            onChange={(e) =>
-              onChange(
-                "isPaid",
-                e.target.value === "paid"
-              )
-            }
-          >
-            <option value="free">Free</option>
-            <option value="paid">Paid</option>
-          </select>
-        </div>
-
-        {tier.isPaid && (
-          <div>
-            <label className="text-sm font-medium">
-              Price (₹)
-            </label>
-            <input
-              type="number"
-              className="border p-2 rounded w-full"
-              value={tier.price}
-              onChange={(e) =>
-                onChange(
-                  "price",
-                  Number(e.target.value)
-                )
-              }
-            />
-          </div>
-        )}
-      </div>
-    )}
-  </div>
-);

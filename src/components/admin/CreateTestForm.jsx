@@ -1,3 +1,31 @@
+/**
+ * CreateTestForm Component
+ *
+ * PURPOSE:
+ * - Collects basic test information
+ * - Defines certificate configuration rules
+ * - Acts as STEP 1 of the test creation flow
+ *
+ * USED IN:
+ * - Admin.jsx
+ *
+ * PROPS:
+ * @param {string} title
+ * @param {Function} setTitle
+ * @param {string} description
+ * @param {Function} setDescription
+ * @param {number|string} duration
+ * @param {Function} setDuration
+ * @param {number} questionCount
+ * @param {Function} setQuestionCount
+ *
+ * @param {Object} certificate
+ *   - Full certificate configuration object
+ * @param {Function} setCertificate
+ *
+ * @param {Function} onNext
+ *   - Callback to proceed to STEP 2 (QuestionsForm)
+ */
 const CreateTestForm = ({
   title,
   setTitle,
@@ -13,6 +41,17 @@ const CreateTestForm = ({
 
   onNext,
 }) => {
+  /**
+   * updateTier
+   *
+   * PURPOSE:
+   * - Updates a specific certificate tier (completion / merit / excellence)
+   * - Keeps other tiers untouched
+   *
+   * @param {string} tier   - Tier key name
+   * @param {string} field  - Field inside tier
+   * @param {*} value       - New value
+   */
   const updateTier = (tier, field, value) => {
     setCertificate((prev) => ({
       ...prev,
@@ -25,6 +64,8 @@ const CreateTestForm = ({
 
   return (
     <div className="bg-white p-6 rounded-xl shadow">
+      
+      {/* ================= HEADER ================= */}
       <h2 className="text-xl font-semibold mb-1">
         Create New Test
       </h2>
@@ -32,8 +73,10 @@ const CreateTestForm = ({
         Define test details and certificate rules. You can edit later.
       </p>
 
-      {/* ================= BASIC INFO ================= */}
+      {/* ================= BASIC TEST INFO ================= */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+        
+        {/* TEST TITLE */}
         <div>
           <label className="block text-sm font-medium mb-1">
             Test Title
@@ -46,6 +89,7 @@ const CreateTestForm = ({
           />
         </div>
 
+        {/* TEST DURATION */}
         <div>
           <label className="block text-sm font-medium mb-1">
             Duration (minutes)
@@ -59,6 +103,7 @@ const CreateTestForm = ({
           />
         </div>
 
+        {/* NUMBER OF QUESTIONS */}
         <div>
           <label className="block text-sm font-medium mb-1">
             Number of Questions
@@ -74,6 +119,7 @@ const CreateTestForm = ({
           />
         </div>
 
+        {/* TEST DESCRIPTION */}
         <div className="md:col-span-2">
           <label className="block text-sm font-medium mb-1">
             Description
@@ -92,6 +138,8 @@ const CreateTestForm = ({
 
       {/* ================= CERTIFICATE SETTINGS ================= */}
       <div className="border rounded-lg p-5 mb-8">
+        
+        {/* MASTER CERTIFICATE TOGGLE */}
         <label className="flex items-center gap-2 mb-4">
           <input
             type="checkbox"
@@ -108,9 +156,11 @@ const CreateTestForm = ({
           </span>
         </label>
 
+        {/* CERTIFICATE TIERS */}
         {certificate.enabled && (
           <div className="space-y-6">
-            {/* ========== COMPLETION ========== */}
+
+            {/* COMPLETION CERTIFICATE */}
             <CertificateTier
               title="Completion Certificate"
               tier={certificate.completion}
@@ -119,7 +169,7 @@ const CreateTestForm = ({
               }
             />
 
-            {/* ========== MERIT ========== */}
+            {/* MERIT CERTIFICATE */}
             <CertificateTier
               title="Merit Certificate"
               tier={certificate.merit}
@@ -128,7 +178,7 @@ const CreateTestForm = ({
               }
             />
 
-            {/* ========== EXCELLENCE ========== */}
+            {/* EXCELLENCE CERTIFICATE */}
             <CertificateTier
               title="Excellence Certificate"
               tier={certificate.excellence}
@@ -140,6 +190,7 @@ const CreateTestForm = ({
         )}
       </div>
 
+      {/* ================= NEXT STEP BUTTON ================= */}
       <button
         onClick={onNext}
         className="bg-blue-600 text-white px-8 py-2 rounded-lg hover:bg-blue-700"
@@ -152,12 +203,21 @@ const CreateTestForm = ({
 
 export default CreateTestForm;
 
-/* ================= CERTIFICATE TIER COMPONENT ================= */
+/* =====================================================
+   CERTIFICATE TIER COMPONENT
+
+   PURPOSE:
+   - Configures a single certificate tier
+   - Reused for completion, merit, excellence
+===================================================== */
 
 const CertificateTier = ({ title, tier, onChange }) => (
   <div className="border rounded-lg p-4 bg-gray-50">
+    
+    {/* TIER TITLE */}
     <h4 className="font-semibold mb-3">{title}</h4>
 
+    {/* ENABLE TOGGLE */}
     <label className="flex items-center gap-2 mb-3">
       <input
         type="checkbox"
@@ -169,8 +229,11 @@ const CertificateTier = ({ title, tier, onChange }) => (
       Enabled
     </label>
 
+    {/* TIER CONFIGURATION */}
     {tier.enabled && (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        
+        {/* MINIMUM PERCENTAGE */}
         <div>
           <label className="text-sm font-medium">
             Min Percentage
@@ -188,6 +251,7 @@ const CertificateTier = ({ title, tier, onChange }) => (
           />
         </div>
 
+        {/* PRICING TYPE */}
         <div>
           <label className="text-sm font-medium">
             Pricing
@@ -207,6 +271,7 @@ const CertificateTier = ({ title, tier, onChange }) => (
           </select>
         </div>
 
+        {/* PRICE INPUT (ONLY IF PAID) */}
         {tier.isPaid && (
           <div>
             <label className="text-sm font-medium">

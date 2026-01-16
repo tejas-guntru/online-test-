@@ -1,3 +1,17 @@
+/**
+ * Profile.jsx
+ *
+ * ROLE:
+ * - Acts as the MAIN CONTROLLER for the Student Profile page
+ * - Handles data fetching, state management, and orchestration
+ * - Renders UI sections and controls certificate/payment flow
+ *
+ * IMPORTANT:
+ * - This file intentionally contains logic
+ * - UI-heavy parts will later be delegated to components
+ * - NO business logic should be duplicated elsewhere
+ */
+
 import { useEffect, useState } from "react";
 import { auth, db } from "../firebase";
 import {
@@ -13,7 +27,13 @@ import { useNavigate } from "react-router-dom";
 import { generateAvatarUrl } from "../utils/avatar";
 import { generateCertificate } from "../utils/generateCertificate";
 
-/* Certificate labels */
+/* ======================================================
+   CERTIFICATE DISPLAY METADATA
+   ------------------------------------------------------
+   - Maps certificate tier → label + emoji
+   - Used ONLY for UI display
+   - Keeps certificate logic clean & consistent
+====================================================== */
 const CERTIFICATE_META = {
   completion: { label: "Completion Certificate", icon: "🏅" },
   merit: { label: "Merit Certificate", icon: "🥈" },
@@ -22,46 +42,79 @@ const CERTIFICATE_META = {
 
 const Profile = () => {
   const navigate = useNavigate();
+
+  // Logged-in user's UID (single source of truth)
   const uid = auth.currentUser.uid;
 
+  /* ======================================================
+     STATE MANAGEMENT
+     ------------------------------------------------------
+     This component owns ALL profile-related state
+  ====================================================== */
+
+  // User document from Firestore
   const [userInfo, setUserInfo] = useState(null);
+
+  // Editable name field
   const [name, setName] = useState("");
+
+  // All test attempts made by the user
   const [results, setResults] = useState([]);
+
+  // Cached test data indexed by testId
+  // Avoids repeated Firestore reads
   const [testsMap, setTestsMap] = useState({});
+
+  // Page loading indicator
   const [loading, setLoading] = useState(true);
+
+  // Profile save button loading state
   const [saving, setSaving] = useState(false);
 
-  /* Payment popup */
-  const [showPaymentPopup, setShowPaymentPopup] =
-    useState(false);
-  const [selectedCert, setSelectedCert] =
-    useState(null);
+  /* ======================================================
+     PAYMENT FLOW STATE
+     ------------------------------------------------------
+     Controls paid certificate modal
+  ====================================================== */
+  const [showPaymentPopup, setShowPaymentPopup] = useState(false);
+  const [selectedCert, setSelectedCert] = useState(null);
 
-  /* ================= LOAD PROFILE ================= */
+  /* ======================================================
+     LOAD PROFILE DATA (ON PAGE LOAD)
+     ------------------------------------------------------
+     1. Fetch user profile
+     2. Fetch test results
+     3. Fetch related tests
+     4. Cache everything locally
+  ====================================================== */
   useEffect(() => {
     const load = async () => {
       try {
-        const userSnap = await getDoc(
-          doc(db, "users", uid)
-        );
+        // Fetch user document
+        const userSnap = await getDoc(doc(db, "users", uid));
         const userData = userSnap.data();
+
         setUserInfo(userData);
         setName(userData.name);
 
+        // Fetch test attempts
         const q = query(
           collection(db, "results"),
           where("userId", "==", uid)
         );
         const rs = await getDocs(q);
+
         const resultsData = rs.docs.map((d) => ({
           id: d.id,
           ...d.data(),
         }));
         setResults(resultsData);
 
+        // Fetch only required tests
         const testIds = [
           ...new Set(resultsData.map((r) => r.testId)),
         ];
+
         const map = {};
         for (let id of testIds) {
           const snap = await getDoc(doc(db, "tests", id));
@@ -79,9 +132,15 @@ const Profile = () => {
     load();
   }, [uid, navigate]);
 
-  /* ================= PROFILE UPDATE ================= */
+  /* ======================================================
+     PROFILE UPDATE (NAME)
+     ------------------------------------------------------
+     - Updates Firestore
+     - Syncs local state
+  ====================================================== */
   const saveProfile = async () => {
     if (!name.trim()) return;
+
     try {
       setSaving(true);
       await updateDoc(doc(db, "users", uid), { name });
@@ -92,12 +151,23 @@ const Profile = () => {
     }
   };
 
+  /* ======================================================
+     AVATAR REGENERATION
+     ------------------------------------------------------
+     - Generates a random avatar URL
+     - Saves it to Firestore
+  ====================================================== */
   const regenerateAvatar = async () => {
     const avatar = generateAvatarUrl(name + Date.now());
     await updateDoc(doc(db, "users", uid), { avatar });
     setUserInfo((u) => ({ ...u, avatar }));
   };
 
+  /* ======================================================
+     LOADING STATE
+     ------------------------------------------------------
+     - Prevents rendering broken UI
+  ====================================================== */
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -106,27 +176,31 @@ const Profile = () => {
     );
   }
 
-  /* ================= ANALYTICS ================= */
+  /* ======================================================
+     ANALYTICS (DERIVED STATE)
+     ------------------------------------------------------
+     - No DB writes
+     - Computed from results only
+  ====================================================== */
   const totalTests = results.length;
   const totalScore = results.reduce((s, r) => s + r.score, 0);
-  const totalQuestions = results.reduce(
-    (s, r) => s + r.total,
-    0
-  );
+  const totalQuestions = results.reduce((s, r) => s + r.total, 0);
+
   const avgPercentage =
     totalQuestions > 0
       ? ((totalScore / totalQuestions) * 100).toFixed(2)
       : 0;
 
+  /* ======================================================
+     RENDER
+  ====================================================== */
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-5xl mx-auto bg-white p-6 rounded-xl shadow">
 
         {/* HEADER */}
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">
-            Student Profile
-          </h1>
+          <h1 className="text-2xl font-bold">Student Profile</h1>
           <button
             onClick={() => navigate("/dashboard")}
             className="text-blue-600 hover:underline"
@@ -182,10 +256,7 @@ const Profile = () => {
         {/* ANALYTICS */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <Stat label="Tests Attempted" value={totalTests} />
-          <Stat
-            label="Average Score"
-            value={`${avgPercentage}%`}
-          />
+          <Stat label="Average Score" value={`${avgPercentage}%`} />
           <Stat label="Total Score" value={totalScore} />
         </div>
 
@@ -198,18 +269,12 @@ const Profile = () => {
           {results.map((r) => {
             const test = testsMap[r.testId];
             const tier = r.certificateEarned;
-            const cert =
-              tier && test?.certificate?.[tier];
+            const cert = tier && test?.certificate?.[tier];
 
             if (!tier) {
               return (
-                <div
-                  key={r.id}
-                  className="border p-4 rounded-lg"
-                >
-                  <p className="font-semibold">
-                    {test?.title}
-                  </p>
+                <div key={r.id} className="border p-4 rounded-lg">
+                  <p className="font-semibold">{test?.title}</p>
                   <p className="text-sm text-red-600">
                     ❌ Not eligible for certificate
                   </p>
@@ -223,9 +288,7 @@ const Profile = () => {
                 className="border p-4 rounded-lg flex justify-between items-center"
               >
                 <div>
-                  <p className="font-semibold">
-                    {test?.title}
-                  </p>
+                  <p className="font-semibold">{test?.title}</p>
                   <p className="text-sm">
                     {CERTIFICATE_META[tier].icon}{" "}
                     {CERTIFICATE_META[tier].label}
@@ -245,11 +308,7 @@ const Profile = () => {
                 <button
                   onClick={() => {
                     if (cert?.isPaid) {
-                      setSelectedCert({
-                        cert,
-                        result: r,
-                        test,
-                      });
+                      setSelectedCert({ cert, result: r, test });
                       setShowPaymentPopup(true);
                     } else {
                       generateCertificate({
@@ -258,8 +317,7 @@ const Profile = () => {
                         score: r.score,
                         total: r.total,
                         percentage: (
-                          (r.score / r.total) *
-                          100
+                          (r.score / r.total) * 100
                         ).toFixed(2),
                         issuedDate: new Date(
                           r.submittedAt.seconds * 1000
@@ -274,9 +332,7 @@ const Profile = () => {
                       : "bg-green-600"
                   }`}
                 >
-                  {cert?.isPaid
-                    ? "Unlock"
-                    : "Download"}
+                  {cert?.isPaid ? "Unlock" : "Download"}
                 </button>
               </div>
             );
@@ -291,19 +347,15 @@ const Profile = () => {
             <h2 className="text-xl font-semibold mb-4 text-center">
               Payment Required
             </h2>
-
             <p className="text-center mb-3">
               This certificate requires payment.
             </p>
-
             <p className="text-center font-bold text-lg mb-4">
               ₹{selectedCert?.cert?.price}
             </p>
-
             <p className="text-sm text-gray-500 text-center mb-4">
               Payment integration coming soon.
             </p>
-
             <div className="flex justify-center gap-3">
               <button
                 onClick={() => setShowPaymentPopup(false)}
@@ -325,6 +377,13 @@ const Profile = () => {
   );
 };
 
+/**
+ * Stat Component
+ *
+ * PURPOSE:
+ * - Displays a single numeric metric
+ * - Used only inside Profile.jsx
+ */
 const Stat = ({ label, value }) => (
   <div className="border p-4 rounded text-center">
     <p className="text-gray-500">{label}</p>
