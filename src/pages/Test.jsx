@@ -1,185 +1,144 @@
-import { useEffect, useState } from "react";
+import { useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { auth, db } from "../firebase";
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  serverTimestamp,
-  doc,
-  getDoc,
-} from "firebase/firestore";
+import { auth } from "../firebase";
+
+/* Hooks */
+import useTestLoader from "../hooks/useTestLoader";
+import useTestTimer from "../hooks/useTestTimer";
+import useExitGuard from "../hooks/useExitGuard";
+import useKeyboardSubmit from "../hooks/useKeyboardSubmit";
+import useBlockBackNavigation from "../hooks/useBlockBackNavigation";
+
+/* Components */
+import TestHeader from "../components/test/TestHeader";
+import QuestionCard from "../components/test/QuestionCard";
+import TestNavigation from "../components/test/TestNavigation";
+import LeaveExamModal from "../components/test/LeaveExamModal";
+
+/* Utils */
+import calculateScore from "../utils/calculateScore";
+import submitTestResult from "../utils/submitTestResult";
 import { decideCertificate } from "../utils/certificateDecision";
 
-/**
- * Test Component
- *
- * PURPOSE:
- * - Allows a student to ATTEMPT a test
- * - Fetches test metadata + questions from Firestore
- * - Handles timer countdown
- * - Collects answers
- * - Calculates score & percentage
- * - Decides certificate eligibility
- * - Saves result to Firestore
- *
- * ROUTE:
- * /test/:id
- *
- * USED BY:
- * - Student Dashboard → Start Test
- */
-
 const Test = () => {
-  /* ================= ROUTING ================= */
-  const { id: testId } = useParams();   // Test ID from URL
+  const { id: testId } = useParams();
   const navigate = useNavigate();
 
   /* ================= STATE ================= */
-  const [test, setTest] = useState(null);          // Test metadata
-  const [questions, setQuestions] = useState([]);  // Questions list
-  const [answers, setAnswers] = useState({});      // questionId → optionIndex
-  const [timeLeft, setTimeLeft] = useState(0);     // Remaining time (seconds)
-  const [loading, setLoading] = useState(true);    // Initial load state
-  const [submitting, setSubmitting] = useState(false); // Prevent double submit
+  const [hasStarted, setHasStarted] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [answers, setAnswers] = useState({});
+  const [selectedOption, setSelectedOption] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
 
-  /* ================= FETCH TEST & QUESTIONS =================
-     - Fetches test document
-     - Fetches all questions linked to this test
-     - Initializes timer based on test duration */
-  useEffect(() => {
-    const loadTest = async () => {
-      try {
-        /* Fetch test metadata */
-        const testSnap = await getDoc(doc(db, "tests", testId));
+  /* ================= LOAD TEST ================= */
+  const { test, questions, loading } = useTestLoader(
+    testId,
+    () => navigate("/dashboard")
+  );
 
-        if (!testSnap.exists()) {
-          alert("Test not found");
-          navigate("/dashboard");
-          return;
-        }
+  const isReady =
+    !loading &&
+    test !== null &&
+    Array.isArray(questions) &&
+    questions.length > 0;
 
-        const testData = testSnap.data();
-        setTest(testData);
+  /* ================= SUBMIT ================= */
+  const handleSubmit = useCallback(
+    async (finalAnswers, isAutoSubmit = false) => {
+      if (isSubmitting) return;
+      if (!test || questions.length === 0) return;
 
-        /* Initialize timer (minutes → seconds) */
-        setTimeLeft(testData.duration * 60);
-
-        /* Fetch test questions */
-        const q = query(
-          collection(db, "questions"),
-          where("testId", "==", testId)
-        );
-        const qsnap = await getDocs(q);
-
-        const qs = qsnap.docs.map((d) => ({
-          id: d.id,
-          ...d.data(),
-        }));
-
-        setQuestions(qs);
-        setLoading(false);
-      } catch (err) {
-        console.error(err);
-        alert("Failed to load test");
-        navigate("/dashboard");
+      if (!isAutoSubmit && Object.keys(finalAnswers).length === 0) {
+        alert("You did not answer any questions.");
+        return;
       }
-    };
 
-    loadTest();
-  }, [testId, navigate]);
+      setIsSubmitting(true);
 
-  /* ================= TIMER LOGIC =================
-     - Runs every second
-     - Auto-submits test when time reaches zero
-     - Stops when submitting */
-  useEffect(() => {
-    if (loading || submitting) return;
+      try {
+        const { score, total, percentage } = calculateScore(
+          questions,
+          finalAnswers
+        );
 
-    if (timeLeft <= 0) {
-      handleSubmit(); // Auto-submit on timeout
-      return;
-    }
+        const certificateEarned = test.certificate
+          ? decideCertificate({
+              percentage,
+              certificateConfig: test.certificate,
+            })
+          : null;
 
-    const timer = setInterval(() => {
-      setTimeLeft((t) => t - 1);
-    }, 1000);
-
-    return () => clearInterval(timer);
-  }, [timeLeft, loading, submitting]);
-
-  /* ================= ANSWER SELECTION =================
-     Stores user's selected option per question */
-  const selectAnswer = (qId, optionIndex) => {
-    setAnswers((prev) => ({
-      ...prev,
-      [qId]: optionIndex,
-    }));
-  };
-
-  /* ================= SUBMIT TEST =================
-     - Calculates score
-     - Calculates percentage
-     - Decides certificate eligibility
-     - Saves result in Firestore
-     - Redirects to Result page */
-  const handleSubmit = async () => {
-    if (submitting) return; // Prevent double submit
-    setSubmitting(true);
-
-    try {
-      let score = 0;
-
-      /* Calculate score */
-      questions.forEach((q) => {
-        if (answers[q.id] === q.correctOptionIndex) {
-          score++;
-        }
-      });
-
-      const total = questions.length;
-      const percentage = Math.round((score / total) * 100);
-
-      /* Decide certificate based on percentage */
-      const certificateEarned = decideCertificate({
-        percentage,
-        certificateConfig: test.certificate,
-      });
-
-      /* Save result to Firestore */
-      await addDoc(collection(db, "results"), {
-        userId: auth.currentUser.uid,
-        testId,
-        score,
-        total,
-        percentage,
-
-        certificateEarned, // completion | merit | excellence | null
-        certificateStatus: certificateEarned ? "available" : "none",
-
-        submittedAt: serverTimestamp(),
-      });
-
-      /* Redirect to result page */
-      navigate("/result", {
-        state: {
+        await submitTestResult({
+          userId: auth.currentUser.uid,
+          testId,
           score,
           total,
           percentage,
           certificateEarned,
-        },
-      });
-    } catch (err) {
-      console.error(err);
-      alert("Failed to submit test");
-      setSubmitting(false);
+        });
+
+        navigate("/result", {
+          replace: true,
+          state: { score, total, percentage, certificateEarned },
+        });
+      } catch (err) {
+        console.error("Submit failed:", err);
+        setIsSubmitting(false);
+      }
+    },
+    [isSubmitting, test, questions, testId, navigate]
+  );
+
+  /* ================= TIMER ================= */
+  const durationMinutes =
+    hasStarted && test?.duration != null
+      ? Number(test.duration)
+      : null;
+
+  const handleTimeout = useCallback(() => {
+    handleSubmit(answers, true); // auto submit
+  }, [handleSubmit, answers]);
+
+  const timeLeft = useTestTimer(durationMinutes, handleTimeout);
+
+  /* ================= EXAM LOCKS ================= */
+  useExitGuard(
+    hasStarted && !isSubmitting,
+    () => setShowLeaveModal(true)
+  );
+  useBlockBackNavigation(hasStarted && !isSubmitting);
+
+  /* ================= CURRENT QUESTION ================= */
+  const currentQuestion = questions[currentIndex];
+
+  /* ================= NEXT ================= */
+  const handleNext = () => {
+    if (selectedOption === null) {
+      alert("Please select an option");
+      return;
+    }
+
+    const updatedAnswers = {
+      ...answers,
+      [currentQuestion.id]: selectedOption,
+    };
+
+    setAnswers(updatedAnswers);
+    setSelectedOption(null);
+
+    if (currentIndex === questions.length - 1) {
+      handleSubmit(updatedAnswers, false);
+    } else {
+      setCurrentIndex((i) => i + 1);
     }
   };
 
-  /* ================= LOADING STATE ================= */
-  if (loading) {
+  useKeyboardSubmit(handleNext, hasStarted && !isSubmitting);
+
+  /* ================= LOADING ================= */
+  if (loading || !test) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         Loading test...
@@ -187,71 +146,80 @@ const Test = () => {
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-4xl mx-auto bg-white p-6 rounded-xl shadow">
+  /* ================= CONFIRMATION SCREEN ================= */
+  if (!hasStarted) {
+    return (
+      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+        <div className="max-w-2xl w-full bg-white p-8 rounded-xl shadow space-y-6">
 
-        {/* ================= HEADER ================= */}
-        <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">
+          <h1 className="text-2xl font-bold text-gray-800">
             {test.title}
           </h1>
 
-          {/* TIMER DISPLAY */}
-          <span className="text-red-600 font-semibold">
-            ⏱ {Math.floor(timeLeft / 60)}:
-            {String(timeLeft % 60).padStart(2, "0")}
-          </span>
-        </div>
+          <p className="text-gray-700">
+            {test.description || "No description provided for this test."}
+          </p>
 
-        {/* ================= QUESTIONS ================= */}
-        <div className="space-y-6">
-          {questions.map((q, index) => (
-            <div
-              key={q.id}
-              className="border p-4 rounded-lg"
+          <div className="bg-gray-50 p-4 rounded-lg text-sm space-y-2">
+            <p>• Duration: {test.duration} minutes</p>
+            <p>• Total Questions: {questions.length}</p>
+            <p>• Once started, you cannot go back</p>
+            <p>• Leaving will submit your exam</p>
+          </div>
+
+          <div className="flex justify-end gap-3">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="px-5 py-2 rounded-lg border text-gray-600 hover:bg-gray-100"
             >
-              <p className="font-medium mb-3">
-                {index + 1}. {q.questionText}
-              </p>
+              Cancel
+            </button>
 
-              <div className="space-y-2">
-                {q.options.map((opt, oi) => (
-                  <label
-                    key={oi}
-                    className={`flex items-center gap-2 border p-2 rounded cursor-pointer ${
-                      answers[q.id] === oi
-                        ? "bg-blue-50 border-blue-500"
-                        : ""
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name={q.id}
-                      checked={answers[q.id] === oi}
-                      onChange={() =>
-                        selectAnswer(q.id, oi)
-                      }
-                    />
-                    {opt}
-                  </label>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
+            <button
+              onClick={() => setHasStarted(true)}
+              className="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
+            >
+              Start Exam
+            </button>
+          </div>
 
-        {/* ================= SUBMIT BUTTON ================= */}
-        <div className="mt-8 text-center">
-          <button
-            onClick={handleSubmit}
-            disabled={submitting}
-            className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50"
-          >
-            {submitting ? "Submitting..." : "Submit Test"}
-          </button>
         </div>
       </div>
+    );
+  }
+
+  /* ================= EXAM UI ================= */
+  return (
+    <div className="min-h-screen bg-gray-100 p-6">
+      <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
+
+        <TestHeader
+          title={test.title}
+          timeLeft={timeLeft}
+          totalDuration={test.duration * 60}
+        />
+
+        <QuestionCard
+          question={currentQuestion}
+          questionNumber={currentIndex + 1}
+          totalQuestions={questions.length}
+          selectedOption={selectedOption}
+          onSelectOption={setSelectedOption}
+        />
+
+        <TestNavigation
+          isLastQuestion={currentIndex === questions.length - 1}
+          onNext={handleNext}
+          submitting={isSubmitting}
+        />
+      </div>
+
+      {/* ===== LEAVE EXAM MODAL ===== */}
+      <LeaveExamModal
+        open={showLeaveModal}
+        onStay={() => setShowLeaveModal(false)}
+        onLeave={() => handleSubmit(answers, true)}
+      />
     </div>
   );
 };
