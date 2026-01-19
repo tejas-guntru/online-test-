@@ -9,10 +9,6 @@ import TestCard from "./TestCard";
  * - Displays tests that the user has ALREADY attempted
  * - Shows result summary (score, percentage)
  * - Prevents re-attempting the same test
- *
- * PROPS:
- * @param {Array} tests       - List of attempted test objects
- * @param {Object} resultsMap - Map of testId → result data
  */
 const AttemptedTests = ({ tests, resultsMap }) => {
   return (
@@ -22,8 +18,7 @@ const AttemptedTests = ({ tests, resultsMap }) => {
         📊 Attempted Tests
       </h2>
 
-      {/* ================= EMPTY STATE =================
-          Shown when user has not attempted any tests */}
+      {/* ================= EMPTY STATE ================= */}
       {tests.length === 0 ? (
         <div className="bg-white p-6 rounded-xl shadow text-center">
           <p className="text-gray-500">
@@ -34,14 +29,23 @@ const AttemptedTests = ({ tests, resultsMap }) => {
         /* ================= ATTEMPTED TESTS GRID ================= */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {tests.map((test) => {
-            // Fetch result data for this specific test
             const result = resultsMap[test.id];
+
+            // 🔍 DEBUG (remove later if you want)
+            console.log("Attempted test →", {
+              id: test.id,
+              previewImage: test.previewImage,
+            });
 
             return (
               <TestCard
                 key={test.id}
-                test={test}
-                leftBorder // Visual indicator that test is completed
+                leftBorder
+                test={{
+                  ...test,
+                  // ✅ EXPLICIT pass (same as AvailableTests)
+                  previewImage: test.previewImage || null,
+                }}
               >
                 {/* ================= RESULT SUMMARY ================= */}
                 <div className="text-sm text-gray-700 mb-4">
@@ -52,7 +56,6 @@ const AttemptedTests = ({ tests, resultsMap }) => {
                     </span>
                   </p>
 
-                  {/* Percentage may not exist for legacy results */}
                   {result?.percentage !== undefined && (
                     <p>
                       Percentage:{" "}
@@ -63,8 +66,7 @@ const AttemptedTests = ({ tests, resultsMap }) => {
                   )}
                 </div>
 
-                {/* ================= ACTION BUTTON =================
-                    Disabled because test is already attempted */}
+                {/* ================= ACTION ================= */}
                 <button
                   disabled
                   className="w-full py-2 rounded-lg bg-gray-400 text-white cursor-not-allowed"

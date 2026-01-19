@@ -1,11 +1,10 @@
 /**
- * TestCard Component
+ * TestCard Component – Fixed Height, Image-Optimized
  *
- * PURPOSE:
- * - Reusable UI card for displaying test information
- * - Used by:
- *   • AvailableTests
- *   • AttemptedTests
+ * Image priority:
+ * 1. test.previewImage
+ * 2. test.thumbnail
+ * 3. fallback UI
  */
 
 const TestCard = ({
@@ -13,42 +12,56 @@ const TestCard = ({
   children,
   leftBorder = false,
 }) => {
+  const previewImage = test.previewImage || test.thumbnail || null;
+
   return (
     <div
-      className={`bg-white rounded-xl shadow-sm overflow-hidden transition hover:shadow-md
-        ${leftBorder ? "border-l-4 border-blue-500" : ""}
+      className={`
+        bg-white border border-gray-200 rounded-lg
+        flex flex-col
+        h-[420px] max-h-[420px]
+        transition-shadow duration-150
+        hover:shadow-md
+        ${leftBorder ? "border-l-4 border-blue-600" : ""}
       `}
     >
-      {/* Thumbnail */}
-      <div className="h-36 bg-gray-100">
-        {test.thumbnail ? (
+      {/* ================= IMAGE (MORE SPACE) ================= */}
+      <div className="h-44 bg-gray-100 border-b shrink-0 overflow-hidden rounded-t-lg">
+        {previewImage ? (
           <img
-            src={test.thumbnail}
+            src={previewImage}
             alt={test.title}
             className="w-full h-full object-cover"
+            loading="lazy"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+            }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-sm">
-            No Image Available
+          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+            No preview available
           </div>
         )}
       </div>
 
-      {/* Content */}
-      <div className="p-5 space-y-3">
+      {/* ================= CONTENT ================= */}
+      <div className="flex flex-col flex-1 px-4 py-4">
 
         {/* Title */}
-        <h3 className="text-lg font-semibold text-gray-800">
+        <h3 className="text-base font-semibold text-gray-900 line-clamp-2 min-h-[3rem]">
           {test.title}
         </h3>
 
-        {/* ✅ Description (FIXED) */}
-        <p className="text-sm text-gray-600">
-          {test.description || "No description provided for this test."}
+        {/* Description */}
+        <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3 min-h-[4.5rem]">
+          {test.description || "No description provided for this assessment."}
         </p>
 
+        {/* Push actions down */}
+        <div className="flex-1" />
+
         {/* Actions */}
-        <div className="pt-2">
+        <div className="border-t pt-3">
           {children}
         </div>
       </div>

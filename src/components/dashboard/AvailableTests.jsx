@@ -1,5 +1,4 @@
 // TestCard → Reusable card component used to display test details
-// This keeps UI consistent across Available & Attempted tests
 import TestCard from "./TestCard";
 
 /**
@@ -8,10 +7,6 @@ import TestCard from "./TestCard";
  * PURPOSE:
  * - Displays tests that the user has NOT attempted yet
  * - Allows user to start a test
- *
- * PROPS:
- * @param {Array} tests   - List of available (unattempted) tests
- * @param {Function} onStart - Callback to start a test (navigation handler)
  */
 const AvailableTests = ({ tests, onStart }) => {
   return (
@@ -21,8 +16,7 @@ const AvailableTests = ({ tests, onStart }) => {
         🟢 Available Tests
       </h2>
 
-      {/* ================= EMPTY STATE =================
-          Shown when no tests are available */}
+      {/* ================= EMPTY STATE ================= */}
       {tests.length === 0 ? (
         <div className="bg-white p-6 rounded-xl shadow text-center">
           <p className="text-gray-500">
@@ -32,26 +26,37 @@ const AvailableTests = ({ tests, onStart }) => {
       ) : (
         /* ================= AVAILABLE TESTS GRID ================= */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tests.map((test) => (
-            <TestCard
-              key={test.id}
-              test={test} // Pass entire test object to card
-            >
-              {/* ================= TEST META ================= */}
-              <p className="text-sm text-gray-500 mb-4">
-                ⏱ {test.duration} minutes
-              </p>
+          {tests.map((test) => {
+            // 🔍 DEBUG (REMOVE LATER)
+            console.log("Available test →", {
+              id: test.id,
+              previewImage: test.previewImage,
+            });
 
-              {/* ================= START ACTION =================
-                  Clicking starts the test */}
-              <button
-                onClick={() => onStart(test.id)}
-                className="w-full py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700"
+            return (
+              <TestCard
+                key={test.id}
+                test={{
+                  ...test,
+                  // ✅ FORCE explicit pass (bulletproof)
+                  previewImage: test.previewImage || null,
+                }}
               >
-                Start Test
-              </button>
-            </TestCard>
-          ))}
+                {/* ================= TEST META ================= */}
+                <p className="text-sm text-gray-500 mb-4">
+                  ⏱ {test.duration} minutes
+                </p>
+
+                {/* ================= START ACTION ================= */}
+                <button
+                  onClick={() => onStart(test.id)}
+                  className="w-full py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700"
+                >
+                  Start Test
+                </button>
+              </TestCard>
+            );
+          })}
         </div>
       )}
     </div>

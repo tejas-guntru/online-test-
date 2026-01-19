@@ -15,33 +15,20 @@ import {
 import { useNavigate } from "react-router-dom";
 
 // ==================== UI COMPONENTS ====================
-
-// Top navigation bar (profile, logout)
 import DashboardHeader from "../components/dashboard/DashboardHeader";
-
-// Search bar to filter tests
 import DashboardSearch from "../components/dashboard/DashboardSearch";
-
-// Shows tests NOT yet attempted by user
 import AvailableTests from "../components/dashboard/AvailableTests";
-
-// Shows tests already attempted by user
 import AttemptedTests from "../components/dashboard/AttemptedTests";
-
-// Loader shown while data is being fetched
 import DashboardLoader from "../components/dashboard/DashboardLoader";
-
-// Public certificate verification box
 import CertificateVerificationBox from "../components/dashboard/CertificateVerificationBox";
 
 // ======================================================
-// DASHBOARD COMPONENT (STUDENT HOME PAGE)
+// DASHBOARD (STUDENT HOME)
 // ======================================================
 const Dashboard = () => {
   const navigate = useNavigate();
 
   // ==================== STATE ====================
-
   const [tests, setTests] = useState([]);
   const [attemptedTests, setAttemptedTests] = useState(new Set());
   const [resultsMap, setResultsMap] = useState({});
@@ -49,7 +36,7 @@ const Dashboard = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   // ======================================================
-  // FEATURE 1: FETCH ACTIVE TESTS (REAL-TIME)
+  // FEATURE 1: FETCH ACTIVE TESTS
   // ======================================================
   useEffect(() => {
     const q = query(
@@ -57,7 +44,7 @@ const Dashboard = () => {
       where("isActive", "==", true)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsub = onSnapshot(q, (snapshot) => {
       setTests(
         snapshot.docs.map((doc) => ({
           id: doc.id,
@@ -67,11 +54,42 @@ const Dashboard = () => {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
   // ======================================================
-  // FEATURE 2: FETCH USER ATTEMPTS (REAL-TIME)
+  // FEATURE 2: FETCH QUESTIONS → BUILD IMAGE MAP
+  // ======================================================
+  useEffect(() => {
+    const unsub = onSnapshot(
+      collection(db, "questions"),
+      (snapshot) => {
+        const imageMap = {};
+
+        snapshot.docs.forEach((doc) => {
+          const { testId, imageUrl } = doc.data();
+
+          // Take FIRST image per test only
+          if (imageUrl && !imageMap[testId]) {
+            imageMap[testId] = imageUrl;
+          }
+        });
+
+        // Merge image into tests
+        setTests((prev) =>
+          prev.map((t) => ({
+            ...t,
+            previewImage: imageMap[t.id] || t.thumbnail || null,
+          }))
+        );
+      }
+    );
+
+    return () => unsub();
+  }, []);
+
+  // ======================================================
+  // FEATURE 3: FETCH USER ATTEMPTS
   // ======================================================
   useEffect(() => {
     if (!auth.currentUser) return;
@@ -81,7 +99,7 @@ const Dashboard = () => {
       where("userId", "==", auth.currentUser.uid)
     );
 
-    const unsubscribe = onSnapshot(q, (snapshot) => {
+    const unsub = onSnapshot(q, (snapshot) => {
       const attempted = new Set();
       const map = {};
 
@@ -95,11 +113,11 @@ const Dashboard = () => {
       setResultsMap(map);
     });
 
-    return () => unsubscribe();
+    return () => unsub();
   }, []);
 
   // ======================================================
-  // FEATURE 3: SEARCH FILTER
+  // FEATURE 4: SEARCH
   // ======================================================
   const filtered = tests.filter((test) => {
     const term = searchTerm.toLowerCase();
@@ -109,9 +127,6 @@ const Dashboard = () => {
     );
   });
 
-  // ======================================================
-  // FEATURE 4: SPLIT TESTS
-  // ======================================================
   const unattempted = filtered.filter(
     (t) => !attemptedTests.has(t.id)
   );
@@ -129,39 +144,34 @@ const Dashboard = () => {
   };
 
   // ======================================================
-  // FEATURE 6: LOADING STATE
+  // LOADING
   // ======================================================
   if (loading) return <DashboardLoader />;
 
   // ======================================================
-  // UI RENDER
+  // UI
   // ======================================================
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <div className="max-w-6xl mx-auto">
 
-        {/* ================= HEADER ================= */}
         <DashboardHeader
           onProfile={() => navigate("/profile")}
           onLogout={handleLogout}
         />
 
-        {/* ================= CERTIFICATE VERIFICATION ================= */}
         <CertificateVerificationBox />
 
-        {/* ================= SEARCH ================= */}
         <DashboardSearch
           value={searchTerm}
           onChange={setSearchTerm}
         />
 
-        {/* ================= AVAILABLE TESTS ================= */}
         <AvailableTests
           tests={unattempted}
           onStart={(id) => navigate(`/test/${id}`)}
         />
 
-        {/* ================= ATTEMPTED TESTS ================= */}
         <AttemptedTests
           tests={attempted}
           resultsMap={resultsMap}
