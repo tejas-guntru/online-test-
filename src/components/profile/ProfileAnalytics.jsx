@@ -1,38 +1,19 @@
 /**
  * ProfileAnalytics Component
  *
- * PURPOSE:
- * - Displays high-level performance analytics for the user
- * - Shows:
- *   • Total tests attempted
- *   • Number of passed tests
- *   • Number of failed tests
- *
- * USED IN:
- * - Profile page → Analytics section
- *
- * PROPS:
- * @param {Array} results
- *   • List of test attempt result objects
- *   • Each result contains score & total
+ * Displays high-level user performance analytics
  */
 const ProfileAnalytics = ({ results }) => {
-  // ==================== CALCULATIONS ====================
-
-  // Total number of attempted tests
   const total = results.length;
 
-  // Number of tests where user scored >= 40%
   const passed = results.filter(
     (r) => (r.score / r.total) * 100 >= 40
   ).length;
 
-  // Failed tests = total - passed
   const failed = total - passed;
 
   return (
-    /* ==================== ANALYTICS GRID ====================
-       Responsive stats display */
+    /* ==================== ANALYTICS GRID ==================== */
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
       <Stat label="Tests Attempted" value={total} />
       <Stat label="Passed" value={passed} />
@@ -44,18 +25,27 @@ const ProfileAnalytics = ({ results }) => {
 /**
  * Stat Component
  *
- * PURPOSE:
- * - Displays a single analytics metric
- * - Used only inside ProfileAnalytics
- *
- * PROPS:
- * @param {string} label - Name of the metric
- * @param {number} value - Metric value
+ * Displays a single analytics metric
  */
 const Stat = ({ label, value }) => (
-  <div className="border p-4 rounded text-center">
-    <p className="text-gray-500">{label}</p>
-    <p className="text-2xl font-bold">{value}</p>
+  <div
+    className="
+      rounded-xl p-5
+      bg-[#020617]
+      border border-white/5
+      text-center
+      shadow-[0_10px_30px_rgba(0,0,0,0.4)]
+      transition
+      hover:border-cyan-400/40
+    "
+  >
+    <p className="text-sm text-white/55 mb-1">
+      {label}
+    </p>
+
+    <p className="text-3xl font-semibold text-white/90">
+      {value}
+    </p>
   </div>
 );
 

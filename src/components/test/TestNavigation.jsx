@@ -5,29 +5,35 @@ const TestNavigation = ({
 }) => {
   return (
     <div className="mt-8 flex justify-between items-center">
-
-      {/* Hint */}
-      <p className="text-xs text-gray-400">
+      {/* ================= HINT ================= */}
+      <p className="text-xs text-white/45">
         {isLastQuestion
           ? "Make sure you have answered carefully"
           : "You cannot go back once you proceed"}
       </p>
 
-      {/* Action Button */}
+      {/* ================= ACTION BUTTON ================= */}
       <button
         onClick={onNext}
         disabled={submitting}
-        className={`px-8 py-3 rounded-lg font-semibold transition-all
+        className={`
+          px-8 py-3 rounded-md
+          text-sm font-semibold
+          bg-transparent
+          border
+          transition-all duration-200
           ${
             isLastQuestion
-              ? "bg-green-600 hover:bg-green-700 text-white"
-              : "bg-blue-600 hover:bg-blue-700 text-white"
+              ? "border-red-500/40 text-red-400 hover:border-red-400 hover:text-red-300 hover:shadow-[0_0_14px_rgba(239,68,68,0.25)]"
+              : "border-cyan-400/40 text-cyan-300 hover:border-cyan-400 hover:text-cyan-200 hover:shadow-[0_0_14px_rgba(34,211,238,0.25)]"
           }
-          disabled:opacity-50 disabled:cursor-not-allowed
+          disabled:opacity-50
+          disabled:cursor-not-allowed
+          disabled:hover:shadow-none
         `}
       >
         {submitting
-          ? "Submitting..."
+          ? "Submitting…"
           : isLastQuestion
           ? "Submit Test"
           : "Next Question →"}

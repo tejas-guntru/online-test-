@@ -4,14 +4,19 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Login from "./pages/Login";
 import VerifyCertificate from "./pages/VerifyCertificate";
 
-/* ================= STUDENT PAGES ================= */
-import Dashboard from "./pages/Dashboard";
-import Test from "./pages/Test";
-import Result from "./pages/Result";
+/* ================= STUDENT DASHBOARD ================= */
+import DashboardLayout from "./pages/DashboardLayout";
+import DashboardHome from "./pages/DashboardHome";
+import DashboardTests from "./pages/DashboardTests";
+import DashboardAttempts from "./pages/DashboardAttempts";
 import Profile from "./pages/Profile";
+
+/* ================= STUDENT OTHER PAGES ================= */
+import Test from "./pages/Test";
+import TestIntro from "./pages/TestIntro";
+import Result from "./pages/Result";
 import Modules from "./pages/Modules";
 import ModuleView from "./pages/ModuleView";
-import TestIntro from "./pages/TestIntro";
 
 /* ================= ADMIN PAGES ================= */
 import Admin from "./pages/Admin";
@@ -34,17 +39,27 @@ function App() {
           element={<VerifyCertificate />}
         />
 
-        {/* ================= STUDENT ================= */}
+        {/* ================= STUDENT DASHBOARD ================= */}
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
-              <Dashboard />
+              <DashboardLayout />
             </ProtectedRoute>
           }
-        />
+        >
+          {/* DEFAULT DASHBOARD PAGE */}
+          <Route index element={<DashboardHome />} />
 
-        {/* ======== TEST INTRO (NEW) ======== */}
+          {/* NAVBAR ROUTES */}
+          <Route path="tests" element={<DashboardTests />} />
+          <Route path="attempts" element={<DashboardAttempts />} />
+
+          {/* ✅ PROFILE MOVED HERE */}
+          <Route path="profile" element={<Profile />} />
+        </Route>
+
+        {/* ================= TEST FLOW ================= */}
         <Route
           path="/test/:id/intro"
           element={
@@ -54,7 +69,6 @@ function App() {
           }
         />
 
-        {/* ======== ACTUAL TEST ======== */}
         <Route
           path="/test/:id"
           element={
@@ -73,16 +87,7 @@ function App() {
           }
         />
 
-        <Route
-          path="/profile"
-          element={
-            <ProtectedRoute>
-              <Profile />
-            </ProtectedRoute>
-          }
-        />
-
-        {/* ======== MODULES (STUDENT) ======== */}
+        {/* ================= MODULES (STUDENT) ================= */}
         <Route
           path="/modules"
           element={
@@ -113,8 +118,6 @@ function App() {
           }
         />
 
-        {/* ======== MODULES (ADMIN) ======== */}
-        {/* ⚠️ NOTE THE /* AT THE END */}
         <Route
           path="/admin/modules/*"
           element={

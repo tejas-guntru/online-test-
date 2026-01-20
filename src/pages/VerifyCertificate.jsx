@@ -1,102 +1,95 @@
 // ==================== REACT CORE ====================
-// useState  → manages component state (loading, data, error)
-// useEffect → runs verification logic when page loads or URL changes
 import { useEffect, useState } from "react";
 
 // ==================== ROUTING ====================
-// useParams → reads dynamic route parameter (:certificateId)
-// Example route: /verify/1sAER98nVDbbkeuoTxdl
 import { useParams } from "react-router-dom";
 
 // ==================== FIREBASE ====================
-// doc     → creates a reference to a Firestore document
-// getDoc  → fetches a single Firestore document
 import { doc, getDoc } from "firebase/firestore";
 
 // ==================== FIREBASE CONFIG ====================
-// db → initialized Firestore instance from firebase.js
 import { db } from "../firebase";
+
+// ==================== BRAND ASSET ====================
+import tgLogo from "../assets/tg-logo.png";
 
 /**
  * VerifyCertificate Component
  *
- * PURPOSE:
- * - Public-facing certificate verification page
- * - Allows ANYONE (no login required) to verify a certificate
- *   using a unique Certificate ID
- *
- * ROUTE:
- * - /verify/:certificateId
- *
- * DATA SOURCE:
- * - Firestore collection: "certificates"
- *
- * SECURITY MODEL:
- * - Read-only access
- * - No authentication required
- * - Certificate documents are immutable
+ * Public-facing certificate verification page
+ * Route: /verify/:certificateId
  */
 const VerifyCertificate = () => {
-
-  /* ================= ROUTE PARAM =================
-     Extracts certificateId from the URL.
-     Example:
-       URL → /verify/1sAER98nVDbbkeuoTxdl
-       certificateId → "1sAER98nVDbbkeuoTxdl"
-  */
   const { certificateId } = useParams();
 
-  /* ================= STATE ================= */
-
-  // Indicates whether verification is still in progress
   const [loading, setLoading] = useState(true);
-
-  // Becomes true if certificate does not exist or an error occurs
   const [notFound, setNotFound] = useState(false);
 
-  // Stores verified certificate data from Firestore
   const [cert, setCert] = useState(null);
+  const [studentName, setStudentName] = useState("");
+  const [testTitle, setTestTitle] = useState("");
+  const [issuedIST, setIssuedIST] = useState("");
+  const [issuedUTC, setIssuedUTC] = useState("");
 
-  /* ================= VERIFICATION LOGIC =================
-     Runs when:
-     - Page first loads
-     - certificateId in the URL changes
-  */
   useEffect(() => {
     const verify = async () => {
       try {
-        // Debug log → helps confirm correct ID is being verified
-        console.log("🔍 Verifying:", certificateId);
+        const certRef = doc(db, "certificates", certificateId);
+        const certSnap = await getDoc(certRef);
 
-        // Reference to certificate document
-        // Path: certificates/{certificateId}
-        const ref = doc(db, "certificates", certificateId);
-
-        // Fetch the document
-        const snap = await getDoc(ref);
-
-        // Debug log → confirms whether document exists
-        console.log("📄 Exists:", snap.exists());
-
-        // If certificate does NOT exist → invalid
-        if (!snap.exists()) {
+        if (!certSnap.exists()) {
           setNotFound(true);
-        } 
-        // Certificate exists → store its data
-        else {
-          setCert(snap.data());
+          return;
         }
 
-      } catch (err) {
-        // Handles:
-        // - Network issues
-        // - Permission issues
-        // - Wrong Firebase project
-        console.error("🔥 Verification error:", err);
-        setNotFound(true);
+        const certData = certSnap.data();
+        setCert(certData);
 
+        if (certData.issuedAt?.seconds) {
+          const date = new Date(certData.issuedAt.seconds * 1000);
+
+          setIssuedIST(
+            date.toLocaleString("en-IN", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+              timeZone: "Asia/Kolkata",
+            })
+          );
+
+          setIssuedUTC(
+            date.toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "long",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              hour12: true,
+              timeZone: "UTC",
+            })
+          );
+        }
+
+        const userSnap = await getDoc(
+          doc(db, "users", certData.userId)
+        );
+        if (userSnap.exists()) {
+          setStudentName(userSnap.data().name || "Unknown User");
+        }
+
+        const testSnap = await getDoc(
+          doc(db, "tests", certData.testId)
+        );
+        if (testSnap.exists()) {
+          setTestTitle(testSnap.data().title || "Unknown Test");
+        }
+      } catch (err) {
+        console.error(err);
+        setNotFound(true);
       } finally {
-        // Stop loading spinner regardless of result
         setLoading(false);
       }
     };
@@ -104,44 +97,98 @@ const VerifyCertificate = () => {
     verify();
   }, [certificateId]);
 
-  /* ================= LOADING UI ================= */
+  /* ================= LOADING ================= */
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center text-white">
         Verifying certificate…
       </div>
     );
   }
 
-  /* ================= INVALID CERTIFICATE UI ================= */
+  /* ================= INVALID ================= */
   if (notFound) {
     return (
-      <div className="min-h-screen flex items-center justify-center text-red-600 text-lg">
+      <div className="min-h-screen flex items-center justify-center text-red-400 text-lg">
         ❌ Invalid or unknown certificate
       </div>
     );
   }
 
-  /* ================= VERIFIED CERTIFICATE UI ================= */
+  /* ================= VERIFIED ================= */
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-      <div className="bg-white p-6 rounded-xl shadow max-w-md w-full">
+    <div
+      className="
+        min-h-screen flex items-center justify-center p-6
+        bg-[radial-gradient(ellipse_at_top,_#0f172a_0%,_#020617_45%,_#000_100%)]
+        relative overflow-hidden
+      "
+    >
+      {/* BACKGROUND GLOWS */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2
+          w-[600px] h-[600px]
+          bg-cyan-500/20 rounded-full blur-[140px]" />
+
+        <div className="absolute bottom-[-200px] right-[-200px]
+          w-[500px] h-[500px]
+          bg-violet-600/20 rounded-full blur-[160px]" />
+      </div>
+
+      {/* GLASS CARD */}
+      <div
+        className="
+          relative z-10
+          max-w-md w-full
+          rounded-2xl
+          bg-white/10 backdrop-blur-xl
+          border border-white/20
+          shadow-[0_0_40px_rgba(34,211,238,0.25)]
+          p-6 text-white
+        "
+      >
+        {/* BRANDING */}
+        <div className="flex flex-col items-center mb-4">
+          <img src={tgLogo} alt="TG Logo" className="h-14 mb-2" />
+          <h2 className="text-lg font-semibold tracking-wide">
+            TERIGO
+          </h2>
+          <p className="text-xs text-cyan-300">
+            Official Certificate Verification
+          </p>
+        </div>
+
+        <div className="my-4 h-px w-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
 
         {/* HEADER */}
-        <h1 className="text-2xl font-bold text-center mb-4">
+        <h1 className="text-xl font-bold text-center mb-4">
           ✅ Certificate Verified
         </h1>
 
-        {/* CERTIFICATE DETAILS */}
-        <p><strong>Certificate ID:</strong> {certificateId}</p>
-        <p><strong>User ID:</strong> {cert.userId}</p>
-        <p><strong>Test ID:</strong> {cert.testId}</p>
-        <p><strong>Certificate Type:</strong> {cert.certificateType}</p>
-        <p><strong>Percentage:</strong> {cert.percentage}%</p>
+        {/* DETAILS */}
+        <div className="space-y-3 text-sm text-gray-200">
+          <p>
+            <strong>Certificate ID</strong><br />
+            <span className="break-all text-cyan-300">
+              {certificateId}
+            </span>
+          </p>
 
-        {/* TRUST MESSAGE */}
-        <p className="mt-4 text-green-600 font-semibold text-center">
-          This certificate is authentic and valid.
+          <p><strong>Student</strong><br />{studentName}</p>
+          <p><strong>Test</strong><br />{testTitle}</p>
+          <p><strong>Certificate Type</strong><br />{cert.certificateType}</p>
+          <p><strong>Score</strong><br />{cert.percentage}%</p>
+
+          <p>
+            <strong>Issued On</strong><br />
+            {issuedIST} (IST)<br />
+            {issuedUTC} (UTC)
+          </p>
+        </div>
+
+        {/* TRUST */}
+        <p className="mt-6 text-center text-green-400 font-semibold">
+          ✔ This certificate is authentic and valid
         </p>
       </div>
     </div>

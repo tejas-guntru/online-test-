@@ -32,6 +32,9 @@ const Admin = () => {
   const [duration, setDuration] = useState("");
   const [questionCount, setQuestionCount] = useState(0);
 
+  // ✅ NEW: TEST THUMBNAIL (WHOLE TEST)
+  const [testThumbnail, setTestThumbnail] = useState("");
+
   /* ================= CERTIFICATE ================= */
   const [certificate, setCertificate] = useState({
     enabled: true,
@@ -79,7 +82,7 @@ const Admin = () => {
     setQuestions(
       Array.from({ length: questionCount }, () => ({
         questionText: "",
-        imageUrl: "",              // ✅ FIX #1
+        imageUrl: "", // per-question image (unchanged)
         options: ["", "", "", ""],
         correctOptionIndex: 0,
       }))
@@ -109,18 +112,21 @@ const Admin = () => {
         description,
         duration: Number(duration),
         totalQuestions: questionCount,
+
+        // ✅ SAVE TEST THUMBNAIL
+        thumbnailUrl: testThumbnail || "",
+
         isActive: true,
         certificate,
         createdBy: auth.currentUser.uid,
         createdAt: serverTimestamp(),
       });
 
-      // ✅ FIX #2: Persist imageUrl
       for (let q of questions) {
         await addDoc(collection(db, "questions"), {
           testId: testRef.id,
           questionText: q.questionText,
-          imageUrl: q.imageUrl || "",   // ✅ CRITICAL LINE
+          imageUrl: q.imageUrl || "",
           options: q.options,
           correctOptionIndex: q.correctOptionIndex,
         });
@@ -134,6 +140,7 @@ const Admin = () => {
       setDescription("");
       setDuration("");
       setQuestionCount(0);
+      setTestThumbnail(""); // ✅ RESET THUMBNAIL
       setQuestions([]);
     } catch (err) {
       console.error(err);
@@ -150,7 +157,6 @@ const Admin = () => {
   return (
     <div className="min-h-screen bg-gray-100 py-10 px-4">
       <div className="max-w-7xl mx-auto space-y-10">
-
         <AdminHeader />
         <StepIndicator step={step} />
 
@@ -164,6 +170,11 @@ const Admin = () => {
             setDuration={setDuration}
             questionCount={questionCount}
             setQuestionCount={setQuestionCount}
+
+            // ✅ PASS THUMBNAIL PROPS
+            testThumbnail={testThumbnail}
+            setTestThumbnail={setTestThumbnail}
+
             certificate={certificate}
             setCertificate={setCertificate}
             onNext={generateQuestions}
@@ -237,7 +248,6 @@ const Admin = () => {
           </h2>
           <RetakeRequests />
         </div>
-
       </div>
     </div>
   );

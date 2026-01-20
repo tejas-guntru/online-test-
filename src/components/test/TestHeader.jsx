@@ -2,60 +2,62 @@ const TestHeader = ({ title, timeLeft, totalDuration }) => {
   const minutes = Math.floor(timeLeft / 60);
   const seconds = String(timeLeft % 60).padStart(2, "0");
 
-  // % of time remaining
   const progressPercent =
     totalDuration > 0
       ? Math.max(0, (timeLeft / totalDuration) * 100)
       : 0;
 
-  // 🎯 Color logic based on percentage
   const isGreen = progressPercent > 50;
   const isOrange = progressPercent <= 50 && progressPercent > 20;
   const isRed = progressPercent <= 20;
 
   return (
-    <div className="sticky top-0 z-10 bg-white border-b pb-4 mb-6">
+    <div className="sticky top-0 z-10 mb-6 bg-[#020617]/95 backdrop-blur border-b border-white/5 pb-4">
       <div className="flex justify-between items-center gap-4">
-
-        {/* Test Title */}
+        {/* ================= TITLE ================= */}
         <div>
-          <h1 className="text-lg md:text-xl font-bold text-gray-800">
+          <h1 className="text-lg md:text-xl font-semibold text-white/90">
             {title}
           </h1>
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-white/45">
             Answer carefully · No back navigation
           </p>
         </div>
 
-        {/* Timer */}
+        {/* ================= TIMER ================= */}
         <div
-          className={`flex items-center gap-2 px-4 py-2 rounded-lg font-semibold tracking-wide
+          className={`
+            flex items-center gap-2
+            px-4 py-2 rounded-md
+            font-semibold tracking-wide
+            tabular-nums
             ${
               isRed
-                ? "bg-red-600 text-white animate-pulse"
+                ? "border border-red-500/50 text-red-400 animate-pulse bg-red-500/10"
                 : isOrange
-                ? "bg-orange-100 text-orange-700"
-                : "bg-green-100 text-green-700"
+                ? "border border-orange-400/40 text-orange-300 bg-orange-400/10"
+                : "border border-cyan-400/40 text-cyan-300 bg-cyan-400/10"
             }
           `}
         >
-          <span className="text-lg">⏱</span>
-          <span className="tabular-nums">
+          <span className="text-base">⏱</span>
+          <span>
             {minutes}:{seconds}
           </span>
         </div>
       </div>
 
-      {/* Progress Bar */}
-      <div className="mt-3 h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
+      {/* ================= PROGRESS BAR ================= */}
+      <div className="mt-3 h-1.5 w-full rounded-full bg-white/10 overflow-hidden">
         <div
-          className={`h-full transition-all duration-1000
+          className={`
+            h-full transition-all duration-1000
             ${
               isRed
-                ? "bg-red-600"
+                ? "bg-red-500"
                 : isOrange
-                ? "bg-orange-500"
-                : "bg-green-500"
+                ? "bg-orange-400"
+                : "bg-cyan-400"
             }
           `}
           style={{ width: `${progressPercent}%` }}

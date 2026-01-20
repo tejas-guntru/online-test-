@@ -1,22 +1,7 @@
 /**
  * ProfileStats Component
  *
- * PURPOSE:
- * - Displays key performance statistics for the user
- * - Focuses on aggregate numbers (not per-test details)
- *
- * USED IN:
- * - Profile page → Statistics section
- *
- * PROPS:
- * @param {number} totalTests
- *   • Total number of tests attempted
- *
- * @param {string|number} avgPercentage
- *   • Average percentage score across all tests
- *
- * @param {number} totalScore
- *   • Sum of scores across all tests
+ * Displays aggregate performance statistics
  */
 const ProfileStats = ({
   totalTests,
@@ -24,8 +9,7 @@ const ProfileStats = ({
   totalScore,
 }) => {
   return (
-    /* ==================== STATS GRID ====================
-       Responsive layout for desktop and mobile */
+    /* ==================== STATS GRID ==================== */
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
       <StatBox label="Tests Attempted" value={totalTests} />
       <StatBox label="Average Score" value={`${avgPercentage}%`} />
@@ -37,18 +21,27 @@ const ProfileStats = ({
 /**
  * StatBox Component
  *
- * PURPOSE:
- * - Displays a single statistic metric
- * - Used internally by ProfileStats
- *
- * PROPS:
- * @param {string} label - Metric label
- * @param {string|number} value - Metric value
+ * Displays a single metric
  */
 const StatBox = ({ label, value }) => (
-  <div className="p-4 border rounded text-center">
-    <p className="text-gray-500">{label}</p>
-    <p className="text-2xl font-bold">{value}</p>
+  <div
+    className="
+      rounded-xl p-5
+      bg-[#020617]
+      border border-white/5
+      text-center
+      shadow-[0_10px_30px_rgba(0,0,0,0.4)]
+      transition
+      hover:border-cyan-400/40
+    "
+  >
+    <p className="text-sm text-white/55 mb-1">
+      {label}
+    </p>
+
+    <p className="text-3xl font-semibold text-white/90">
+      {value}
+    </p>
   </div>
 );
 

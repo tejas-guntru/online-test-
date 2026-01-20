@@ -1,30 +1,8 @@
+import { useMemo } from "react";
+
 /**
- * CreateTestForm Component
- *
- * PURPOSE:
- * - Collects basic test information
- * - Defines certificate configuration rules
- * - Acts as STEP 1 of the test creation flow
- *
- * USED IN:
- * - Admin.jsx
- *
- * PROPS:
- * @param {string} title
- * @param {Function} setTitle
- * @param {string} description
- * @param {Function} setDescription
- * @param {number|string} duration
- * @param {Function} setDuration
- * @param {number} questionCount
- * @param {Function} setQuestionCount
- *
- * @param {Object} certificate
- *   - Full certificate configuration object
- * @param {Function} setCertificate
- *
- * @param {Function} onNext
- *   - Callback to proceed to STEP 2 (QuestionsForm)
+ * CreateTestForm
+ * STEP 1 — Test Info + Thumbnail + Certificate Rules
  */
 const CreateTestForm = ({
   title,
@@ -36,22 +14,14 @@ const CreateTestForm = ({
   questionCount,
   setQuestionCount,
 
+  testThumbnail,
+  setTestThumbnail,
+
   certificate,
   setCertificate,
 
   onNext,
 }) => {
-  /**
-   * updateTier
-   *
-   * PURPOSE:
-   * - Updates a specific certificate tier (completion / merit / excellence)
-   * - Keeps other tiers untouched
-   *
-   * @param {string} tier   - Tier key name
-   * @param {string} field  - Field inside tier
-   * @param {*} value       - New value
-   */
   const updateTier = (tier, field, value) => {
     setCertificate((prev) => ({
       ...prev,
@@ -62,50 +32,65 @@ const CreateTestForm = ({
     }));
   };
 
+  /* ---------------- VALIDATION ---------------- */
+
+  const validationError = useMemo(() => {
+    if (!title.trim()) return "Test title is required";
+    if (!duration || duration <= 0)
+      return "Duration must be greater than 0";
+    if (!questionCount || questionCount <= 0)
+      return "At least 1 question required";
+
+    return null;
+  }, [title, duration, questionCount]);
+
+  const handleNext = () => {
+    if (validationError) {
+      alert(validationError);
+      return;
+    }
+    onNext();
+  };
+
   return (
     <div className="bg-white p-6 rounded-xl shadow">
-      
-      {/* ================= HEADER ================= */}
+      {/* HEADER */}
       <h2 className="text-xl font-semibold mb-1">
         Create New Test
       </h2>
       <p className="text-sm text-gray-500 mb-6">
-        Define test details and certificate rules. You can edit later.
+        Define test details and appearance.
       </p>
 
-      {/* ================= BASIC TEST INFO ================= */}
+      {/* BASIC INFO */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-        
-        {/* TEST TITLE */}
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="text-sm font-medium">
             Test Title
           </label>
           <input
             className="border p-3 rounded w-full"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            placeholder="JavaScript Fundamentals"
           />
         </div>
 
-        {/* TEST DURATION */}
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="text-sm font-medium">
             Duration (minutes)
           </label>
           <input
             type="number"
             className="border p-3 rounded w-full"
             value={duration}
-            onChange={(e) => setDuration(e.target.value)}
-            placeholder="30"
+            onChange={(e) =>
+              setDuration(Number(e.target.value))
+            }
           />
         </div>
 
-        {/* NUMBER OF QUESTIONS */}
         <div>
-          <label className="block text-sm font-medium mb-1">
+          <label className="text-sm font-medium">
             Number of Questions
           </label>
           <input
@@ -115,13 +100,11 @@ const CreateTestForm = ({
             onChange={(e) =>
               setQuestionCount(Number(e.target.value))
             }
-            placeholder="10"
           />
         </div>
 
-        {/* TEST DESCRIPTION */}
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-1">
+          <label className="text-sm font-medium">
             Description
           </label>
           <textarea
@@ -131,15 +114,41 @@ const CreateTestForm = ({
             onChange={(e) =>
               setDescription(e.target.value)
             }
-            placeholder="This test evaluates core JavaScript concepts."
           />
         </div>
       </div>
 
-      {/* ================= CERTIFICATE SETTINGS ================= */}
+      {/* 🖼️ TEST THUMBNAIL */}
       <div className="border rounded-lg p-5 mb-8">
-        
-        {/* MASTER CERTIFICATE TOGGLE */}
+        <h3 className="font-semibold mb-3">
+          Test Thumbnail
+        </h3>
+
+        <input
+          type="text"
+          className="border p-3 rounded w-full mb-3"
+          placeholder="https://example.com/test-thumbnail.png"
+          value={testThumbnail}
+          onChange={(e) =>
+            setTestThumbnail(e.target.value)
+          }
+        />
+
+        {testThumbnail && (
+          <img
+            src={testThumbnail}
+            alt="Test Thumbnail"
+            onError={(e) => {
+              e.target.src =
+                "/test-thumbnail-placeholder.png";
+            }}
+            className="max-h-48 rounded border"
+          />
+        )}
+      </div>
+
+      {/* CERTIFICATES */}
+      <div className="border rounded-lg p-5 mb-8">
         <label className="flex items-center gap-2 mb-4">
           <input
             type="checkbox"
@@ -156,43 +165,29 @@ const CreateTestForm = ({
           </span>
         </label>
 
-        {/* CERTIFICATE TIERS */}
         {certificate.enabled && (
           <div className="space-y-6">
-
-            {/* COMPLETION CERTIFICATE */}
-            <CertificateTier
-              title="Completion Certificate"
-              tier={certificate.completion}
-              onChange={(f, v) =>
-                updateTier("completion", f, v)
-              }
-            />
-
-            {/* MERIT CERTIFICATE */}
-            <CertificateTier
-              title="Merit Certificate"
-              tier={certificate.merit}
-              onChange={(f, v) =>
-                updateTier("merit", f, v)
-              }
-            />
-
-            {/* EXCELLENCE CERTIFICATE */}
-            <CertificateTier
-              title="Excellence Certificate"
-              tier={certificate.excellence}
-              onChange={(f, v) =>
-                updateTier("excellence", f, v)
-              }
-            />
+            {["completion", "merit", "excellence"].map(
+              (key) => (
+                <CertificateTier
+                  key={key}
+                  title={`${key[0].toUpperCase()}${key.slice(
+                    1
+                  )} Certificate`}
+                  tier={certificate[key]}
+                  onChange={(f, v) =>
+                    updateTier(key, f, v)
+                  }
+                />
+              )
+            )}
           </div>
         )}
       </div>
 
-      {/* ================= NEXT STEP BUTTON ================= */}
+      {/* NEXT */}
       <button
-        onClick={onNext}
+        onClick={handleNext}
         className="bg-blue-600 text-white px-8 py-2 rounded-lg hover:bg-blue-700"
       >
         Next → Add Questions
@@ -204,20 +199,13 @@ const CreateTestForm = ({
 export default CreateTestForm;
 
 /* =====================================================
-   CERTIFICATE TIER COMPONENT
-
-   PURPOSE:
-   - Configures a single certificate tier
-   - Reused for completion, merit, excellence
+   CERTIFICATE TIER (UNCHANGED)
 ===================================================== */
 
 const CertificateTier = ({ title, tier, onChange }) => (
   <div className="border rounded-lg p-4 bg-gray-50">
-    
-    {/* TIER TITLE */}
     <h4 className="font-semibold mb-3">{title}</h4>
 
-    {/* ENABLE TOGGLE */}
     <label className="flex items-center gap-2 mb-3">
       <input
         type="checkbox"
@@ -229,11 +217,8 @@ const CertificateTier = ({ title, tier, onChange }) => (
       Enabled
     </label>
 
-    {/* TIER CONFIGURATION */}
     {tier.enabled && (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        
-        {/* MINIMUM PERCENTAGE */}
         <div>
           <label className="text-sm font-medium">
             Min Percentage
@@ -251,7 +236,6 @@ const CertificateTier = ({ title, tier, onChange }) => (
           />
         </div>
 
-        {/* PRICING TYPE */}
         <div>
           <label className="text-sm font-medium">
             Pricing
@@ -271,7 +255,6 @@ const CertificateTier = ({ title, tier, onChange }) => (
           </select>
         </div>
 
-        {/* PRICE INPUT (ONLY IF PAID) */}
         {tier.isPaid && (
           <div>
             <label className="text-sm font-medium">

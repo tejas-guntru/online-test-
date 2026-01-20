@@ -1,10 +1,7 @@
 /**
  * TestCard Component – Fixed Height, Image-Optimized
  *
- * Image priority:
- * 1. test.previewImage
- * 2. test.thumbnail
- * 3. fallback UI
+ * Dark Neon Dashboard styling
  */
 
 const TestCard = ({
@@ -17,16 +14,18 @@ const TestCard = ({
   return (
     <div
       className={`
-        bg-white border border-gray-200 rounded-lg
         flex flex-col
         h-[420px] max-h-[420px]
-        transition-shadow duration-150
-        hover:shadow-md
-        ${leftBorder ? "border-l-4 border-blue-600" : ""}
+        rounded-xl
+        bg-[#020617]
+        border border-white/5
+        transition-all duration-200
+        hover:shadow-[0_12px_30px_rgba(0,0,0,0.45)]
+        ${leftBorder ? "border-l-4 border-cyan-400/60" : ""}
       `}
     >
-      {/* ================= IMAGE (MORE SPACE) ================= */}
-      <div className="h-44 bg-gray-100 border-b shrink-0 overflow-hidden rounded-t-lg">
+      {/* ================= IMAGE ================= */}
+      <div className="h-44 shrink-0 overflow-hidden rounded-t-xl bg-black/40 border-b border-white/5">
         {previewImage ? (
           <img
             src={previewImage}
@@ -38,7 +37,7 @@ const TestCard = ({
             }}
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs">
+          <div className="w-full h-full flex items-center justify-center text-white/40 text-xs">
             No preview available
           </div>
         )}
@@ -46,22 +45,22 @@ const TestCard = ({
 
       {/* ================= CONTENT ================= */}
       <div className="flex flex-col flex-1 px-4 py-4">
-
         {/* Title */}
-        <h3 className="text-base font-semibold text-gray-900 line-clamp-2 min-h-[3rem]">
+        <h3 className="text-base font-semibold text-white/90 line-clamp-2 min-h-[3rem]">
           {test.title}
         </h3>
 
         {/* Description */}
-        <p className="mt-2 text-sm text-gray-600 leading-relaxed line-clamp-3 min-h-[4.5rem]">
-          {test.description || "No description provided for this assessment."}
+        <p className="mt-2 text-sm text-white/60 leading-relaxed line-clamp-3 min-h-[4.5rem]">
+          {test.description ||
+            "No description provided for this assessment."}
         </p>
 
         {/* Push actions down */}
         <div className="flex-1" />
 
         {/* Actions */}
-        <div className="border-t pt-3">
+        <div className="pt-3 border-t border-white/5">
           {children}
         </div>
       </div>

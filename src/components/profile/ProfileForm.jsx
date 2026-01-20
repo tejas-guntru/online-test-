@@ -1,36 +1,22 @@
-import { useState } from "react";
-import { db } from "../../firebase";
-import { doc, updateDoc } from "firebase/firestore";
+// components/profile/ProfileForm.jsx
 
-const EditableProfileForm = ({ user }) => {
-  const [name, setName] = useState(user.name);
-  const [saving, setSaving] = useState(false);
-
-  const handleSave = async () => {
-    if (!name.trim()) return;
-
-    try {
-      setSaving(true);
-      await updateDoc(doc(db, "users", user.uid), { name });
-      alert("Profile updated");
-    } catch (err) {
-      console.error(err);
-      alert("Update failed");
-    } finally {
-      setSaving(false);
-    }
-  };
-
+const ProfileForm = ({
+  name,
+  email,
+  setName,
+  onSave,
+  saving,
+}) => {
   return (
     <div
       className="
-        rounded-xl p-6 mb-6
+        rounded-xl p-6 mb-8
         bg-[#020617]
         border border-white/5
         shadow-[0_10px_30px_rgba(0,0,0,0.4)]
       "
     >
-      {/* ================= NAME FIELD ================= */}
+      {/* ================= NAME ================= */}
       <label className="block text-sm text-white/70 mb-1">
         Name
       </label>
@@ -50,12 +36,12 @@ const EditableProfileForm = ({ user }) => {
         "
       />
 
-      {/* ================= EMAIL FIELD (READ-ONLY) ================= */}
+      {/* ================= EMAIL (READ-ONLY) ================= */}
       <label className="block text-sm text-white/70 mb-1">
         Email
       </label>
       <input
-        value={user.email}
+        value={email}
         disabled
         className="
           w-full px-3 py-2 rounded-md
@@ -66,10 +52,10 @@ const EditableProfileForm = ({ user }) => {
         "
       />
 
-      {/* ================= SAVE ACTION ================= */}
+      {/* ================= ACTION ================= */}
       <div className="mt-5">
         <button
-          onClick={handleSave}
+          onClick={onSave}
           disabled={saving}
           className="
             inline-flex items-center justify-center
@@ -93,4 +79,4 @@ const EditableProfileForm = ({ user }) => {
   );
 };
 
-export default EditableProfileForm;
+export default ProfileForm;

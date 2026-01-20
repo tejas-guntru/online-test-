@@ -9,25 +9,39 @@ const QuestionCard = ({
 
   return (
     <div className="space-y-6">
-      {/* Progress */}
+      {/* ================= PROGRESS ================= */}
       <div className="flex justify-between items-center">
-        <p className="text-sm text-gray-500">
+        <p className="text-sm text-white/55">
           Question {questionNumber} of {totalQuestions}
         </p>
 
-        <span className="text-xs bg-gray-100 px-3 py-1 rounded-full">
+        <span className="text-xs px-3 py-1 rounded-full bg-white/5 text-white/60 border border-white/10">
           Single correct
         </span>
       </div>
 
-      {/* Question */}
-      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-        <p className="text-base font-semibold text-gray-800 leading-relaxed">
+      {/* ================= QUESTION ================= */}
+      <div className="rounded-xl p-5 bg-black/30 border border-white/5 space-y-4">
+        <p className="text-base font-medium text-white/90 leading-relaxed">
           {question.questionText}
         </p>
+
+        {/* OPTIONAL QUESTION IMAGE */}
+        {question.imageUrl && (
+          <div className="flex justify-center">
+            <img
+              src={question.imageUrl}
+              alt="Question illustration"
+              className="max-h-64 rounded-lg border border-white/10 object-contain"
+              onError={(e) => {
+                e.currentTarget.style.display = "none";
+              }}
+            />
+          </div>
+        )}
       </div>
 
-      {/* Options */}
+      {/* ================= OPTIONS ================= */}
       <div className="space-y-3">
         {question.options.map((option, index) => {
           const isSelected = selectedOption === index;
@@ -37,21 +51,28 @@ const QuestionCard = ({
               key={index}
               type="button"
               onClick={() => onSelectOption(index)}
-              className={`w-full text-left flex items-center gap-4 p-4 rounded-lg border transition-all
+              className={`
+                w-full text-left
+                flex items-center gap-4
+                p-4 rounded-lg
+                border transition-all duration-150
                 ${
                   isSelected
-                    ? "border-blue-600 bg-blue-50 ring-2 ring-blue-200"
-                    : "border-gray-300 hover:border-blue-400 hover:bg-gray-50"
+                    ? "border-cyan-400/60 bg-cyan-500/5 shadow-[0_0_0_1px_rgba(34,211,238,0.25)]"
+                    : "border-white/10 bg-black/20 hover:border-white/20 hover:bg-black/30"
                 }
               `}
             >
               {/* Option letter */}
               <div
-                className={`flex items-center justify-center w-8 h-8 rounded-full border font-semibold
+                className={`
+                  flex items-center justify-center
+                  w-8 h-8 rounded-full
+                  border font-semibold text-sm
                   ${
                     isSelected
-                      ? "bg-blue-600 text-white border-blue-600"
-                      : "bg-white text-gray-600 border-gray-400"
+                      ? "border-cyan-400 bg-cyan-500/20 text-cyan-300"
+                      : "border-white/20 text-white/60"
                   }
                 `}
               >
@@ -59,7 +80,13 @@ const QuestionCard = ({
               </div>
 
               {/* Option text */}
-              <span className="text-gray-800">
+              <span
+                className={`${
+                  isSelected
+                    ? "text-white/90"
+                    : "text-white/70"
+                }`}
+              >
                 {option}
               </span>
             </button>
@@ -67,9 +94,16 @@ const QuestionCard = ({
         })}
       </div>
 
-      {/* Hint */}
-      <p className="text-xs text-gray-400 text-center">
-        Select an option and press <span className="font-medium">Next</span> or <span className="font-medium">Enter</span>
+      {/* ================= HINT ================= */}
+      <p className="text-xs text-white/40 text-center">
+        Select an option and press{" "}
+        <span className="text-white/60 font-medium">
+          Next
+        </span>{" "}
+        or{" "}
+        <span className="text-white/60 font-medium">
+          Enter
+        </span>
       </p>
     </div>
   );

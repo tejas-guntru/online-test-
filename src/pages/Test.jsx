@@ -38,12 +38,6 @@ const Test = () => {
     () => navigate("/dashboard")
   );
 
-  const isReady =
-    !loading &&
-    test !== null &&
-    Array.isArray(questions) &&
-    questions.length > 0;
-
   /* ================= SUBMIT ================= */
   const handleSubmit = useCallback(
     async (finalAnswers, isAutoSubmit = false) => {
@@ -98,15 +92,14 @@ const Test = () => {
       : null;
 
   const handleTimeout = useCallback(() => {
-    handleSubmit(answers, true); // auto submit
+    handleSubmit(answers, true);
   }, [handleSubmit, answers]);
 
   const timeLeft = useTestTimer(durationMinutes, handleTimeout);
 
   /* ================= EXAM LOCKS ================= */
-  useExitGuard(
-    hasStarted && !isSubmitting,
-    () => setShowLeaveModal(true)
+  useExitGuard(hasStarted && !isSubmitting, () =>
+    setShowLeaveModal(true)
   );
   useBlockBackNavigation(hasStarted && !isSubmitting);
 
@@ -140,8 +133,10 @@ const Test = () => {
   /* ================= LOADING ================= */
   if (loading || !test) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        Loading test...
+      <div className="min-h-screen flex items-center justify-center bg-[#020617]">
+        <p className="text-sm text-white/60">
+          Loading test…
+        </p>
       </div>
     );
   }
@@ -149,18 +144,27 @@ const Test = () => {
   /* ================= CONFIRMATION SCREEN ================= */
   if (!hasStarted) {
     return (
-      <div className="min-h-screen bg-gray-100 flex items-center justify-center p-6">
-        <div className="max-w-2xl w-full bg-white p-8 rounded-xl shadow space-y-6">
-
-          <h1 className="text-2xl font-bold text-gray-800">
+      <div className="min-h-screen bg-[#020617] flex items-center justify-center p-6">
+        <div
+          className="
+            max-w-2xl w-full
+            rounded-xl p-8
+            bg-black/40
+            border border-white/5
+            shadow-[0_20px_40px_rgba(0,0,0,0.6)]
+            space-y-6
+          "
+        >
+          <h1 className="text-2xl font-semibold text-white/90">
             {test.title}
           </h1>
 
-          <p className="text-gray-700">
-            {test.description || "No description provided for this test."}
+          <p className="text-white/65">
+            {test.description ||
+              "No description provided for this test."}
           </p>
 
-          <div className="bg-gray-50 p-4 rounded-lg text-sm space-y-2">
+          <div className="rounded-lg p-4 bg-black/30 border border-white/5 text-sm text-white/60 space-y-1">
             <p>• Duration: {test.duration} minutes</p>
             <p>• Total Questions: {questions.length}</p>
             <p>• Once started, you cannot go back</p>
@@ -170,19 +174,32 @@ const Test = () => {
           <div className="flex justify-end gap-3">
             <button
               onClick={() => navigate("/dashboard")}
-              className="px-5 py-2 rounded-lg border text-gray-600 hover:bg-gray-100"
+              className="
+                px-5 py-2 rounded-md
+                bg-white/5
+                text-white/70
+                hover:bg-white/10
+                transition
+              "
             >
               Cancel
             </button>
 
             <button
               onClick={() => setHasStarted(true)}
-              className="px-6 py-2 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700"
+              className="
+                px-6 py-2 rounded-md
+                border border-white/10
+                text-white/85
+                transition-all
+                hover:border-cyan-400
+                hover:text-cyan-300
+                hover:shadow-[0_0_14px_rgba(34,211,238,0.25)]
+              "
             >
               Start Exam
             </button>
           </div>
-
         </div>
       </div>
     );
@@ -190,9 +207,17 @@ const Test = () => {
 
   /* ================= EXAM UI ================= */
   return (
-    <div className="min-h-screen bg-gray-100 p-6">
-      <div className="max-w-3xl mx-auto bg-white p-6 rounded-xl shadow space-y-6">
-
+    <div className="min-h-screen bg-[#020617] p-6">
+      <div
+        className="
+          max-w-3xl mx-auto
+          rounded-xl p-6
+          bg-black/40
+          border border-white/5
+          shadow-[0_20px_40px_rgba(0,0,0,0.6)]
+          space-y-6
+        "
+      >
         <TestHeader
           title={test.title}
           timeLeft={timeLeft}

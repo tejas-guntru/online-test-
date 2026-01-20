@@ -1,35 +1,47 @@
 /**
- * ProfileHeader Component
+ * ProfileHeader
  *
- * PURPOSE:
- * - Displays the header section of the Profile page
- * - Shows page title
- * - Provides navigation back to the Dashboard
+ * ROLE:
+ * - Provides navigation logic for Profile context
+ * - Delegates rendering to DashboardHeader
+ * - Owns route awareness (active tab)
+ * - Owns logout behavior
  *
- * USED IN:
- * - Profile page (top section)
- *
- * PROPS:
- * @param {Function} onBack
- *   • Callback triggered when user clicks "Back to Dashboard"
+ * NOTE:
+ * - No UI duplication
+ * - No "back" navigation
+ * - One navbar across student app
  */
-const ProfileHeader = ({ onBack }) => {
-  return (
-    <div className="flex justify-between items-center mb-6">
-      
-      {/* ================= PAGE TITLE ================= */}
-      <h1 className="text-2xl font-bold">
-        Student Profile
-      </h1>
 
-      {/* ================= BACK NAVIGATION ================= */}
-      <button
-        onClick={onBack}
-        className="text-blue-600 hover:underline"
-      >
-        ← Back to Dashboard
-      </button>
-    </div>
+import { useLocation, useNavigate } from "react-router-dom";
+import { signOut } from "firebase/auth";
+import { auth } from "../../firebase";
+import DashboardHeader from "../dashboard/DashboardHeader";
+
+const ProfileHeader = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  /* ---------------- NAVIGATION ---------------- */
+
+  const handleNavigate = (path) => {
+    if (location.pathname !== path) {
+      navigate(path);
+    }
+  };
+
+  const handleLogout = async () => {
+    await signOut(auth);
+    navigate("/");
+  };
+
+  return (
+    <DashboardHeader
+      activePath={location.pathname}
+      onNavigate={handleNavigate}
+      onProfile={() => handleNavigate("/profile")}
+      onLogout={handleLogout}
+    />
   );
 };
 
