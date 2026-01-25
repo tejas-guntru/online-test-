@@ -6,7 +6,13 @@ import VerifyCertificate from "./pages/VerifyCertificate";
 
 /* ================= STUDENT DASHBOARD ================= */
 import DashboardLayout from "./pages/DashboardLayout";
-import DashboardHome from "./pages/DashboardHome";
+
+/* ❗ KEEP THIS IMPORT AS REQUESTED */
+import DashboardHome from "./pages/CertificationVerification";
+
+/* ✅ REAL HOME PAGE (NEW) */
+import RealDashboardHome from "./pages/DashboardHome";
+
 import DashboardTests from "./pages/DashboardTests";
 import DashboardAttempts from "./pages/DashboardAttempts";
 import Profile from "./pages/Profile";
@@ -34,6 +40,7 @@ function App() {
         {/* ================= PUBLIC ================= */}
         <Route path="/" element={<Login />} />
 
+        {/* 🔓 PUBLIC CERTIFICATE VERIFICATION (QR / EMPLOYERS) */}
         <Route
           path="/verify/:certificateId"
           element={<VerifyCertificate />}
@@ -48,14 +55,15 @@ function App() {
             </ProtectedRoute>
           }
         >
-          {/* DEFAULT DASHBOARD PAGE */}
-          <Route index element={<DashboardHome />} />
+          {/* ✅ REAL DASHBOARD HOME */}
+          <Route index element={<RealDashboardHome />} />
 
-          {/* NAVBAR ROUTES */}
+          {/* 🔒 DASHBOARD VERIFY (LOGGED-IN TOOL ONLY) */}
+          <Route path="verify" element={<DashboardHome />} />
+
+          {/* OTHER DASHBOARD PAGES */}
           <Route path="tests" element={<DashboardTests />} />
           <Route path="attempts" element={<DashboardAttempts />} />
-
-          {/* ✅ PROFILE MOVED HERE */}
           <Route path="profile" element={<Profile />} />
         </Route>
 

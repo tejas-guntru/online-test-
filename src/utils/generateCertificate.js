@@ -1,6 +1,23 @@
 import jsPDF from "jspdf";
+import QRCode from "qrcode";
+import tgLogo from "../assets/tg-logo.png";
 
-export const generateCertificate = ({
+/* ---------- Image loader ---------- */
+const loadImageAsDataURL = (src) =>
+  new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => {
+      const c = document.createElement("canvas");
+      c.width = img.naturalWidth;
+      c.height = img.naturalHeight;
+      c.getContext("2d").drawImage(img, 0, 0);
+      resolve(c.toDataURL("image/png"));
+    };
+    img.onerror = reject;
+    img.src = src;
+  });
+
+export const generateCertificate = async ({
   studentName,
   testTitle,
   score,
@@ -11,115 +28,143 @@ export const generateCertificate = ({
 }) => {
   const doc = new jsPDF("landscape", "mm", "a4");
 
-  const pageWidth = 297;
-  const pageHeight = 210;
+  const W = 297;
+  const H = 210;
+  const CX = W / 2;
 
-  /* ================= BACKGROUND ================= */
-  doc.setFillColor(252, 252, 252);
-  doc.rect(0, 0, pageWidth, pageHeight, "F");
+  /* ---------- Colors ---------- */
+  const neon = [190, 255, 235];
+  const dark = [17, 24, 39];
+  const muted = [75, 85, 99];
 
-  /* ================= OUTER BORDER ================= */
-  doc.setDrawColor(212, 175, 55); // gold
-  doc.setLineWidth(3);
-  doc.rect(10, 10, pageWidth - 20, pageHeight - 20);
+  /* ---------- Background ---------- */
+  doc.setFillColor(...neon);
+  doc.rect(0, 0, W, H, "F");
 
-  /* ================= INNER BORDER ================= */
-  doc.setDrawColor(180, 180, 180);
-  doc.setLineWidth(0.5);
-  doc.rect(15, 15, pageWidth - 30, pageHeight - 30);
+  /* ---------- White panel (moved UP) ---------- */
+  const panelX = 20;
+  const panelY = 14;            // ⬆ moved up
+  const panelW = W - 40;
+  const panelH = H - 32;
 
-  /* ================= WATERMARK ================= */
-  doc.setTextColor(230, 230, 230);
-  doc.setFontSize(60);
-  doc.setFont("helvetica", "bold");
-  doc.text("CERTIFIED", pageWidth / 2, pageHeight / 2, {
-    align: "center",
-    angle: 30,
-  });
+  doc.setFillColor(255, 255, 255);
+  doc.roundedRect(panelX, panelY, panelW, panelH, 8, 8, "F");
 
-  doc.setTextColor(0, 0, 0); // reset color
+  /* ---------- Vertical layout system ---------- */
+  let y = panelY + 12;          // ⬆ start higher
 
-  /* ================= TITLE ================= */
-  doc.setFontSize(30);
-  doc.setFont("times", "bold");
-  doc.text("Certificate of Achievement", pageWidth / 2, 45, {
-    align: "center",
-  });
+  /* ---------- BIG CIRCULAR LOGO ---------- */
+  const logoSize = 48;          // ⬆ bigger
+  const logo = await loadImageAsDataURL(tgLogo);
 
-  /* ================= DIVIDER ================= */
-  doc.setDrawColor(212, 175, 55);
-  doc.setLineWidth(1);
-  doc.line(80, 52, pageWidth - 80, 52);
+  doc.setDrawColor(...dark);
+  doc.setLineWidth(1.5);        // stronger circle
+  doc.circle(CX, y + logoSize / 2, logoSize / 2 + 3);
 
-  /* ================= SUBTITLE ================= */
-  doc.setFontSize(16);
-  doc.setFont("times", "italic");
-  doc.text(
-    "This is proudly presented to",
-    pageWidth / 2,
-    70,
-    { align: "center" }
+  doc.addImage(
+    logo,
+    "PNG",
+    CX - logoSize / 2,
+    y,
+    logoSize,
+    logoSize
   );
 
-  /* ================= STUDENT NAME ================= */
-  doc.setFontSize(26);
-  doc.setFont("times", "bold");
-  doc.text(studentName, pageWidth / 2, 88, {
-    align: "center",
-  });
+  y += logoSize + 12;           // tighter spacing
 
-  /* ================= DESCRIPTION ================= */
+  /* ---------- Title ---------- */
+  doc.setFont("times", "bold");
+  doc.setFontSize(30);
+  doc.setTextColor(...dark);
+  doc.text("Certificate of Achievement", CX, y, { align: "center" });
+
+  y += 12;
+
+  /* ---------- Subtitle ---------- */
+  doc.setFontSize(14);
+  doc.setFont("times", "italic");
+  doc.setTextColor(...muted);
+  doc.text("This is proudly presented to", CX, y, { align: "center" });
+
+  y += 16;
+
+  /* ---------- Student name ---------- */
+  doc.setFontSize(28);
+  doc.setFont("times", "bold");
+  doc.setTextColor(...dark);
+  doc.text(studentName, CX, y, { align: "center" });
+
+  y += 14;
+
+  /* ---------- Description ---------- */
   doc.setFontSize(14);
   doc.setFont("helvetica", "normal");
+  doc.setTextColor(...muted);
   doc.text(
     "for successfully completing the assessment titled",
-    pageWidth / 2,
-    105,
+    CX,
+    y,
     { align: "center" }
   );
 
-  /* ================= TEST TITLE ================= */
+  y += 12;
+
+  /* ---------- Test title ---------- */
   doc.setFontSize(18);
   doc.setFont("helvetica", "bold");
-  doc.text(testTitle, pageWidth / 2, 120, {
-    align: "center",
-  });
+  doc.setTextColor(...dark);
+  doc.text(testTitle, CX, y, { align: "center" });
 
-  /* ================= SCORE ================= */
-  doc.setFontSize(14);
+  y += 16;
+
+  /* ---------- Score ---------- */
+  doc.setFontSize(13);
   doc.setFont("helvetica", "normal");
+  doc.setTextColor(...dark);
   doc.text(
-    `Score: ${score} / ${total}  |  Percentage: ${percentage}%`,
-    pageWidth / 2,
-    138,
+    `Score: ${score}/${total}  •  Percentage: ${percentage}%`,
+    CX,
+    y,
     { align: "center" }
   );
 
-  /* ================= FOOTER LEFT ================= */
-  doc.setFontSize(11);
-  doc.text(`Issued on: ${issuedDate}`, 30, 165);
-  doc.text(`Certificate ID: ${certificateId}`, 30, 175);
+  /* ---------- Footer left ---------- */
+  doc.setFontSize(10);
+  doc.setTextColor(...muted);
+  doc.text(`Issued on: ${issuedDate}`, panelX + 10, panelY + panelH - 18);
+  doc.text(`Certificate ID: ${certificateId}`, panelX + 10, panelY + panelH - 10);
 
-  /* ================= SIGNATURE ================= */
-  doc.setFont("times", "italic");
-  doc.text("Authorized Signature", pageWidth - 70, 165, {
-    align: "center",
-  });
+  /* ---------- QR (bottom-right, aligned) ---------- */
+  const qrSize = 36;
+  const qrX = panelX + panelW - qrSize - 12;
+  const qrY = panelY + panelH - qrSize - 24;
 
-  doc.setDrawColor(0);
-  doc.line(pageWidth - 110, 160, pageWidth - 30, 160);
+  const verifyUrl = `https://online-test2.web.app/verify/${certificateId}`;
+  const qrData = await QRCode.toDataURL(verifyUrl);
 
-  /* ================= PLATFORM NAME ================= */
-  doc.setFontSize(12);
+  doc.addImage(qrData, "PNG", qrX, qrY, qrSize, qrSize);
+
+  doc.setFontSize(9);
+  doc.setTextColor(...muted);
+  doc.text(
+    "Scan to verify",
+    qrX + qrSize / 2,
+    qrY + qrSize + 8,
+    { align: "center" }
+  );
+
+  /* ---------- Brand ---------- */
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.setTextColor(...dark);
   doc.text(
-    "ONLINE TEST PLATFORM",
-    pageWidth - 70,
-    178,
-    { align: "center" }
+    "TERIGO • Certification Authority",
+    panelX + panelW - 10,
+    panelY + panelH - 10,
+    { align: "right" }
   );
 
-  /* ================= SAVE ================= */
+  /* ---------- Save ---------- */
   doc.save(
     `Certificate_${studentName.replace(/\s+/g, "_")}_${testTitle.replace(
       /\s+/g,

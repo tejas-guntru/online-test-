@@ -15,7 +15,6 @@ import tgLogo from "../assets/tg-logo.png";
 
 /**
  * VerifyCertificate Component
- *
  * Public-facing certificate verification page
  * Route: /verify/:certificateId
  */
@@ -26,8 +25,6 @@ const VerifyCertificate = () => {
   const [notFound, setNotFound] = useState(false);
 
   const [cert, setCert] = useState(null);
-  const [studentName, setStudentName] = useState("");
-  const [testTitle, setTestTitle] = useState("");
   const [issuedIST, setIssuedIST] = useState("");
   const [issuedUTC, setIssuedUTC] = useState("");
 
@@ -72,20 +69,6 @@ const VerifyCertificate = () => {
             })
           );
         }
-
-        const userSnap = await getDoc(
-          doc(db, "users", certData.userId)
-        );
-        if (userSnap.exists()) {
-          setStudentName(userSnap.data().name || "Unknown User");
-        }
-
-        const testSnap = await getDoc(
-          doc(db, "tests", certData.testId)
-        );
-        if (testSnap.exists()) {
-          setTestTitle(testSnap.data().title || "Unknown Test");
-        }
       } catch (err) {
         console.error(err);
         setNotFound(true);
@@ -94,7 +77,11 @@ const VerifyCertificate = () => {
       }
     };
 
-    verify();
+    if (certificateId) verify();
+    else {
+      setNotFound(true);
+      setLoading(false);
+    }
   }, [certificateId]);
 
   /* ================= LOADING ================= */
@@ -107,7 +94,7 @@ const VerifyCertificate = () => {
   }
 
   /* ================= INVALID ================= */
-  if (notFound) {
+  if (notFound || !cert) {
     return (
       <div className="min-h-screen flex items-center justify-center text-red-400 text-lg">
         ❌ Invalid or unknown certificate
@@ -129,7 +116,6 @@ const VerifyCertificate = () => {
         <div className="absolute -top-40 left-1/2 -translate-x-1/2
           w-[600px] h-[600px]
           bg-cyan-500/20 rounded-full blur-[140px]" />
-
         <div className="absolute bottom-[-200px] right-[-200px]
           w-[500px] h-[500px]
           bg-violet-600/20 rounded-full blur-[160px]" />
@@ -160,7 +146,6 @@ const VerifyCertificate = () => {
 
         <div className="my-4 h-px w-full bg-gradient-to-r from-transparent via-cyan-400 to-transparent" />
 
-        {/* HEADER */}
         <h1 className="text-xl font-bold text-center mb-4">
           ✅ Certificate Verified
         </h1>
@@ -174,10 +159,25 @@ const VerifyCertificate = () => {
             </span>
           </p>
 
-          <p><strong>Student</strong><br />{studentName}</p>
-          <p><strong>Test</strong><br />{testTitle}</p>
-          <p><strong>Certificate Type</strong><br />{cert.certificateType}</p>
-          <p><strong>Score</strong><br />{cert.percentage}%</p>
+          <p>
+            <strong>Student</strong><br />
+            {cert.studentName || "—"}
+          </p>
+
+          <p>
+            <strong>Test</strong><br />
+            {cert.testTitle || "—"}
+          </p>
+
+          <p>
+            <strong>Certificate Type</strong><br />
+            {cert.certificateType || "—"}
+          </p>
+
+          <p>
+            <strong>Score</strong><br />
+            {cert.percentage ?? "—"}%
+          </p>
 
           <p>
             <strong>Issued On</strong><br />
@@ -186,7 +186,6 @@ const VerifyCertificate = () => {
           </p>
         </div>
 
-        {/* TRUST */}
         <p className="mt-6 text-center text-green-400 font-semibold">
           ✔ This certificate is authentic and valid
         </p>
