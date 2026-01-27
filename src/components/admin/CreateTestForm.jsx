@@ -13,13 +13,10 @@ const CreateTestForm = ({
   setDuration,
   questionCount,
   setQuestionCount,
-
   testThumbnail,
   setTestThumbnail,
-
   certificate,
   setCertificate,
-
   onNext,
 }) => {
   const updateTier = (tier, field, value) => {
@@ -33,14 +30,12 @@ const CreateTestForm = ({
   };
 
   /* ---------------- VALIDATION ---------------- */
-
   const validationError = useMemo(() => {
     if (!title.trim()) return "Test title is required";
     if (!duration || duration <= 0)
       return "Duration must be greater than 0";
     if (!questionCount || questionCount <= 0)
       return "At least 1 question required";
-
     return null;
   }, [title, duration, questionCount]);
 
@@ -53,35 +48,36 @@ const CreateTestForm = ({
   };
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow">
+    <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl shadow-lg text-gray-100">
+
       {/* HEADER */}
       <h2 className="text-xl font-semibold mb-1">
         Create New Test
       </h2>
-      <p className="text-sm text-gray-500 mb-6">
+      <p className="text-sm text-gray-400 mb-6">
         Define test details and appearance.
       </p>
 
       {/* BASIC INFO */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
         <div>
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-gray-300">
             Test Title
           </label>
           <input
-            className="border p-3 rounded w-full"
+            className="bg-gray-800 border border-gray-700 p-3 rounded w-full text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
         </div>
 
         <div>
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-gray-300">
             Duration (minutes)
           </label>
           <input
             type="number"
-            className="border p-3 rounded w-full"
+            className="bg-gray-800 border border-gray-700 p-3 rounded w-full text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             value={duration}
             onChange={(e) =>
               setDuration(Number(e.target.value))
@@ -90,12 +86,12 @@ const CreateTestForm = ({
         </div>
 
         <div>
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-gray-300">
             Number of Questions
           </label>
           <input
             type="number"
-            className="border p-3 rounded w-full"
+            className="bg-gray-800 border border-gray-700 p-3 rounded w-full text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             value={questionCount}
             onChange={(e) =>
               setQuestionCount(Number(e.target.value))
@@ -104,11 +100,11 @@ const CreateTestForm = ({
         </div>
 
         <div className="md:col-span-2">
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-gray-300">
             Description
           </label>
           <textarea
-            className="border p-3 rounded w-full"
+            className="bg-gray-800 border border-gray-700 p-3 rounded w-full text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             rows={3}
             value={description}
             onChange={(e) =>
@@ -119,14 +115,14 @@ const CreateTestForm = ({
       </div>
 
       {/* 🖼️ TEST THUMBNAIL */}
-      <div className="border rounded-lg p-5 mb-8">
-        <h3 className="font-semibold mb-3">
+      <div className="border border-gray-800 rounded-lg p-5 mb-8 bg-gray-950">
+        <h3 className="font-semibold mb-3 text-gray-100">
           Test Thumbnail
         </h3>
 
         <input
           type="text"
-          className="border p-3 rounded w-full mb-3"
+          className="bg-gray-800 border border-gray-700 p-3 rounded w-full mb-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
           placeholder="https://example.com/test-thumbnail.png"
           value={testThumbnail}
           onChange={(e) =>
@@ -142,16 +138,17 @@ const CreateTestForm = ({
               e.target.src =
                 "/test-thumbnail-placeholder.png";
             }}
-            className="max-h-48 rounded border"
+            className="max-h-48 rounded border border-gray-700"
           />
         )}
       </div>
 
       {/* CERTIFICATES */}
-      <div className="border rounded-lg p-5 mb-8">
-        <label className="flex items-center gap-2 mb-4">
+      <div className="border border-gray-800 rounded-lg p-5 mb-8 bg-gray-950">
+        <label className="flex items-center gap-2 mb-4 text-gray-200">
           <input
             type="checkbox"
+            className="accent-blue-600"
             checked={certificate.enabled}
             onChange={(e) =>
               setCertificate((prev) => ({
@@ -188,7 +185,7 @@ const CreateTestForm = ({
       {/* NEXT */}
       <button
         onClick={handleNext}
-        className="bg-blue-600 text-white px-8 py-2 rounded-lg hover:bg-blue-700"
+        className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-2 rounded-lg transition"
       >
         Next → Add Questions
       </button>
@@ -199,16 +196,19 @@ const CreateTestForm = ({
 export default CreateTestForm;
 
 /* =====================================================
-   CERTIFICATE TIER (UNCHANGED)
+   CERTIFICATE TIER (DARK)
 ===================================================== */
 
 const CertificateTier = ({ title, tier, onChange }) => (
-  <div className="border rounded-lg p-4 bg-gray-50">
-    <h4 className="font-semibold mb-3">{title}</h4>
+  <div className="border border-gray-700 rounded-lg p-4 bg-gray-900">
+    <h4 className="font-semibold mb-3 text-gray-100">
+      {title}
+    </h4>
 
-    <label className="flex items-center gap-2 mb-3">
+    <label className="flex items-center gap-2 mb-3 text-gray-300">
       <input
         type="checkbox"
+        className="accent-blue-600"
         checked={tier.enabled}
         onChange={(e) =>
           onChange("enabled", e.target.checked)
@@ -220,12 +220,12 @@ const CertificateTier = ({ title, tier, onChange }) => (
     {tier.enabled && (
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-gray-300">
             Min Percentage
           </label>
           <input
             type="number"
-            className="border p-2 rounded w-full"
+            className="bg-gray-800 border border-gray-700 p-2 rounded w-full text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             value={tier.minPercentage}
             onChange={(e) =>
               onChange(
@@ -237,11 +237,11 @@ const CertificateTier = ({ title, tier, onChange }) => (
         </div>
 
         <div>
-          <label className="text-sm font-medium">
+          <label className="text-sm font-medium text-gray-300">
             Pricing
           </label>
           <select
-            className="border p-2 rounded w-full"
+            className="bg-gray-800 border border-gray-700 p-2 rounded w-full text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
             value={tier.isPaid ? "paid" : "free"}
             onChange={(e) =>
               onChange(
@@ -257,12 +257,12 @@ const CertificateTier = ({ title, tier, onChange }) => (
 
         {tier.isPaid && (
           <div>
-            <label className="text-sm font-medium">
+            <label className="text-sm font-medium text-gray-300">
               Price (₹)
             </label>
             <input
               type="number"
-              className="border p-2 rounded w-full"
+              className="bg-gray-800 border border-gray-700 p-2 rounded w-full text-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-600"
               value={tier.price}
               onChange={(e) =>
                 onChange(

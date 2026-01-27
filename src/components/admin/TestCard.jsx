@@ -22,7 +22,7 @@
  */
 const TestCard = ({ test, onToggle, onEdit }) => {
   return (
-    <div className="bg-white p-5 rounded-xl shadow hover:shadow-lg transition">
+    <div className="bg-gray-900 border border-gray-800 p-5 rounded-xl shadow hover:shadow-lg transition text-gray-100">
 
       {/* ================= HEADER =================
           Displays test title and current status */}
@@ -35,8 +35,8 @@ const TestCard = ({ test, onToggle, onEdit }) => {
         <span
           className={`text-xs px-2 py-1 rounded-full ${
             test.isActive
-              ? "bg-green-100 text-green-700"
-              : "bg-red-100 text-red-700"
+              ? "bg-emerald-500/20 text-emerald-400"
+              : "bg-red-500/20 text-red-400"
           }`}
         >
           {test.isActive ? "Active" : "Revoked"}
@@ -45,13 +45,13 @@ const TestCard = ({ test, onToggle, onEdit }) => {
 
       {/* ================= DESCRIPTION =================
           Limited to 3 lines for layout consistency */}
-      <p className="text-sm text-gray-500 mt-2 line-clamp-3">
+      <p className="text-sm text-gray-400 mt-2 line-clamp-3">
         {test.description || "No description"}
       </p>
 
       {/* ================= METADATA =================
           Duration and question count */}
-      <div className="mt-4 text-sm text-gray-600">
+      <div className="mt-4 text-sm text-gray-300">
         ⏱ {test.duration} mins
         <br />
         ❓ {test.totalQuestions} questions
@@ -63,7 +63,7 @@ const TestCard = ({ test, onToggle, onEdit }) => {
         {/* Edit → Opens read-only modal */}
         <button
           onClick={() => onEdit(test)}
-          className="flex-1 px-3 py-2 rounded bg-gray-200 hover:bg-gray-300"
+          className="flex-1 px-3 py-2 rounded bg-gray-800 hover:bg-gray-700 text-gray-200"
         >
           Edit
         </button>
@@ -73,8 +73,8 @@ const TestCard = ({ test, onToggle, onEdit }) => {
           onClick={() => onToggle(test.id, test.isActive)}
           className={`flex-1 px-3 py-2 rounded text-white ${
             test.isActive
-              ? "bg-red-500 hover:bg-red-600"
-              : "bg-green-600 hover:bg-green-700"
+              ? "bg-red-600 hover:bg-red-700"
+              : "bg-emerald-600 hover:bg-emerald-700"
           }`}
         >
           {test.isActive ? "Revoke" : "Activate"}

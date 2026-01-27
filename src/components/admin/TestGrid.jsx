@@ -41,7 +41,7 @@ const TestGrid = ({ tests, attemptCounts, onToggle, onEdit }) => {
       {tests.map((test) => (
         <div
           key={test.id}
-          className="bg-white p-6 rounded-xl shadow hover:shadow-lg transition"
+          className="bg-gray-900 border border-gray-800 p-6 rounded-xl shadow hover:shadow-lg transition text-gray-100"
         >
           {/* ================= TEST TITLE ================= */}
           <h3 className="text-lg font-semibold mb-1">
@@ -50,17 +50,17 @@ const TestGrid = ({ tests, attemptCounts, onToggle, onEdit }) => {
 
           {/* ================= DESCRIPTION =================
               Fallback shown if description is missing */}
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-gray-400 mb-2">
             {test.description || "No description"}
           </p>
 
           {/* ================= TEST META INFO ================= */}
-          <div className="text-sm text-gray-500 space-y-1 mb-4">
+          <div className="text-sm text-gray-400 space-y-1 mb-4">
             <p>⏱ Duration: {test.duration} mins</p>
 
             <p>
               📊 Attempts:{" "}
-              <span className="font-semibold">
+              <span className="font-semibold text-gray-200">
                 {attemptCounts[test.id] || 0}
               </span>
             </p>
@@ -70,8 +70,8 @@ const TestGrid = ({ tests, attemptCounts, onToggle, onEdit }) => {
               <span
                 className={`font-semibold ${
                   test.isActive
-                    ? "text-green-600"
-                    : "text-red-500"
+                    ? "text-emerald-400"
+                    : "text-red-400"
                 }`}
               >
                 {test.isActive ? "Active" : "Revoked"}
@@ -87,8 +87,8 @@ const TestGrid = ({ tests, attemptCounts, onToggle, onEdit }) => {
               onClick={() => onToggle(test.id, test.isActive)}
               className={`flex-1 py-1.5 rounded text-white ${
                 test.isActive
-                  ? "bg-red-500 hover:bg-red-600"
-                  : "bg-green-600 hover:bg-green-700"
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-emerald-600 hover:bg-emerald-700"
               }`}
             >
               {test.isActive ? "Revoke" : "Activate"}
@@ -97,7 +97,7 @@ const TestGrid = ({ tests, attemptCounts, onToggle, onEdit }) => {
             {/* Open read-only Edit / Delete modal */}
             <button
               onClick={() => onEdit(test)}
-              className="flex-1 py-1.5 rounded bg-gray-800 text-white hover:bg-gray-900"
+              className="flex-1 py-1.5 rounded bg-gray-800 text-gray-200 hover:bg-gray-700"
             >
               Edit
             </button>

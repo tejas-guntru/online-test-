@@ -44,7 +44,6 @@ const RetakeRequests = () => {
         }));
         setRequests(reqs);
 
-        // Fetch test titles
         const testIds = [
           ...new Set(reqs.map((r) => r.testId)),
         ];
@@ -139,7 +138,7 @@ const RetakeRequests = () => {
 
   if (loading) {
     return (
-      <div className="p-6 text-gray-600">
+      <div className="p-6 text-gray-400">
         Loading Try Again requests…
       </div>
     );
@@ -147,18 +146,19 @@ const RetakeRequests = () => {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
+
       {/* 🔍 SEARCH BAR */}
       <input
         type="text"
         placeholder="Search by student name, email, or test title…"
         value={searchTerm}
         onChange={(e) => setSearchTerm(e.target.value)}
-        className="w-full border rounded-lg p-3 focus:outline-none focus:ring focus:border-blue-400"
+        className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-600"
       />
 
       {/* EMPTY STATE */}
       {filteredRequests.length === 0 && (
-        <div className="text-gray-500 p-6 text-center">
+        <div className="text-gray-400 p-6 text-center">
           No matching Try Again requests.
         </div>
       )}
@@ -167,20 +167,20 @@ const RetakeRequests = () => {
       {filteredRequests.map((req) => (
         <div
           key={req.id}
-          className="border rounded-xl p-5 bg-white shadow-sm"
+          className="border border-gray-800 rounded-xl p-5 bg-gray-900 shadow-sm text-gray-100"
         >
           {/* STUDENT */}
           <div>
             <p className="font-semibold text-lg">
               {req.userName || "Unknown Student"}
             </p>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-400">
               {req.userEmail || `UID: ${req.userId}`}
             </p>
           </div>
 
           {/* TEST */}
-          <div className="mt-2 text-sm">
+          <div className="mt-2 text-sm text-gray-300">
             <span className="font-semibold">
               Test:
             </span>{" "}
@@ -188,9 +188,9 @@ const RetakeRequests = () => {
           </div>
 
           {/* SCORE */}
-          <div className="mt-2 text-sm">
+          <div className="mt-2 text-sm text-gray-300">
             Score:{" "}
-            <span className="font-semibold">
+            <span className="font-semibold text-gray-100">
               {req.originalScore}/{req.originalTotal}
             </span>{" "}
             ({req.originalPercentage}%)
@@ -201,7 +201,7 @@ const RetakeRequests = () => {
             <button
               onClick={() => approveRequest(req)}
               disabled={processingId === req.id}
-              className="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+              className="px-4 py-2 rounded bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50"
             >
               Approve & Allow Try Again
             </button>
@@ -209,7 +209,7 @@ const RetakeRequests = () => {
             <button
               onClick={() => rejectRequest(req)}
               disabled={processingId === req.id}
-              className="px-4 py-2 rounded bg-gray-300 hover:bg-gray-400 disabled:opacity-50"
+              className="px-4 py-2 rounded bg-gray-700 text-gray-200 hover:bg-gray-600 disabled:opacity-50"
             >
               Reject
             </button>

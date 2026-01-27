@@ -32,7 +32,7 @@ const Admin = () => {
   const [duration, setDuration] = useState("");
   const [questionCount, setQuestionCount] = useState(0);
 
-  // ✅ NEW: TEST THUMBNAIL (WHOLE TEST)
+  // ✅ TEST THUMBNAIL
   const [testThumbnail, setTestThumbnail] = useState("");
 
   /* ================= CERTIFICATE ================= */
@@ -82,7 +82,7 @@ const Admin = () => {
     setQuestions(
       Array.from({ length: questionCount }, () => ({
         questionText: "",
-        imageUrl: "", // per-question image (unchanged)
+        imageUrl: "",
         options: ["", "", "", ""],
         correctOptionIndex: 0,
       }))
@@ -112,10 +112,7 @@ const Admin = () => {
         description,
         duration: Number(duration),
         totalQuestions: questionCount,
-
-        // ✅ SAVE TEST THUMBNAIL
         thumbnailUrl: testThumbnail || "",
-
         isActive: true,
         certificate,
         createdBy: auth.currentUser.uid,
@@ -134,13 +131,12 @@ const Admin = () => {
 
       alert("Test created successfully");
 
-      // Reset flow
       setStep(1);
       setTitle("");
       setDescription("");
       setDuration("");
       setQuestionCount(0);
-      setTestThumbnail(""); // ✅ RESET THUMBNAIL
+      setTestThumbnail("");
       setQuestions([]);
     } catch (err) {
       console.error(err);
@@ -155,8 +151,9 @@ const Admin = () => {
 
   /* ================= RENDER ================= */
   return (
-    <div className="min-h-screen bg-gray-100 py-10 px-4">
+    <div className="min-h-screen bg-gray-950 text-gray-100 py-10 px-4">
       <div className="max-w-7xl mx-auto space-y-10">
+
         <AdminHeader />
         <StepIndicator step={step} />
 
@@ -170,11 +167,8 @@ const Admin = () => {
             setDuration={setDuration}
             questionCount={questionCount}
             setQuestionCount={setQuestionCount}
-
-            // ✅ PASS THUMBNAIL PROPS
             testThumbnail={testThumbnail}
             setTestThumbnail={setTestThumbnail}
-
             certificate={certificate}
             setCertificate={setCertificate}
             onNext={generateQuestions}
@@ -190,26 +184,30 @@ const Admin = () => {
           />
         )}
 
+        {/* ================= MANAGE TESTS ================= */}
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-semibold">Manage Tests</h2>
+          <h2 className="text-2xl font-semibold text-gray-100">
+            Manage Tests
+          </h2>
 
           <div className="flex gap-2">
             <button
               onClick={() => setViewMode("grid")}
-              className={`px-4 py-1.5 rounded ${
+              className={`px-4 py-1.5 rounded transition ${
                 viewMode === "grid"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200"
+                  ? "bg-blue-700 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
             >
               Grid
             </button>
+
             <button
               onClick={() => setViewMode("list")}
-              className={`px-4 py-1.5 rounded ${
+              className={`px-4 py-1.5 rounded transition ${
                 viewMode === "list"
-                  ? "bg-blue-600 text-white"
-                  : "bg-gray-200"
+                  ? "bg-blue-700 text-white"
+                  : "bg-gray-800 text-gray-300 hover:bg-gray-700"
               }`}
             >
               List
@@ -242,12 +240,14 @@ const Admin = () => {
           />
         )}
 
-        <div className="bg-white rounded-xl shadow p-6">
-          <h2 className="text-2xl font-semibold mb-4">
+        {/* ================= RETAKE REQUESTS ================= */}
+        <div className="bg-gray-900 border border-gray-800 rounded-xl shadow-lg p-6">
+          <h2 className="text-2xl font-semibold mb-4 text-gray-100">
             🔁 Try Again Requests
           </h2>
           <RetakeRequests />
         </div>
+
       </div>
     </div>
   );

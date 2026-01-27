@@ -43,11 +43,11 @@ const TestList = ({
   return (
     /* ================= TABLE CONTAINER =================
        overflow-x-auto ensures usability on small screens */
-    <div className="bg-white rounded-xl shadow overflow-x-auto">
-      <table className="w-full text-sm">
+    <div className="bg-gray-900 border border-gray-800 rounded-xl shadow overflow-x-auto">
+      <table className="w-full text-sm text-gray-200">
 
         {/* ================= TABLE HEADER ================= */}
-        <thead className="bg-gray-100 text-gray-700">
+        <thead className="bg-gray-800 text-gray-300">
           <tr>
             <th className="px-4 py-3 text-left">Title</th>
             <th className="px-4 py-3 text-left">Duration</th>
@@ -62,10 +62,10 @@ const TestList = ({
           {tests.map((test) => (
             <tr
               key={test.id}
-              className="border-t hover:bg-gray-50"
+              className="border-t border-gray-800 hover:bg-gray-800/50 transition"
             >
               {/* TEST TITLE */}
-              <td className="px-4 py-3 font-medium">
+              <td className="px-4 py-3 font-medium text-gray-100">
                 {test.title}
               </td>
 
@@ -76,7 +76,7 @@ const TestList = ({
 
               {/* ATTEMPT COUNT */}
               <td className="px-4 py-3">
-                <span className="font-semibold">
+                <span className="font-semibold text-gray-100">
                   {attemptCounts[test.id] || 0}
                 </span>
               </td>
@@ -86,8 +86,8 @@ const TestList = ({
                 <span
                   className={`font-semibold ${
                     test.isActive
-                      ? "text-green-600"
-                      : "text-red-500"
+                      ? "text-emerald-400"
+                      : "text-red-400"
                   }`}
                 >
                   {test.isActive ? "Active" : "Revoked"}
@@ -105,8 +105,8 @@ const TestList = ({
                     }
                     className={`px-3 py-1 rounded text-white ${
                       test.isActive
-                        ? "bg-red-500 hover:bg-red-600"
-                        : "bg-green-600 hover:bg-green-700"
+                        ? "bg-red-600 hover:bg-red-700"
+                        : "bg-emerald-600 hover:bg-emerald-700"
                     }`}
                   >
                     {test.isActive ? "Revoke" : "Activate"}
@@ -115,7 +115,7 @@ const TestList = ({
                   {/* Open Read-Only Test Modal */}
                   <button
                     onClick={() => onEdit(test)}
-                    className="px-3 py-1 rounded bg-gray-800 text-white hover:bg-gray-900"
+                    className="px-3 py-1 rounded bg-gray-800 text-gray-200 hover:bg-gray-700"
                   >
                     Edit
                   </button>

@@ -24,17 +24,17 @@ const AdminHeader = () => {
   const isModules = location.pathname.startsWith("/admin/modules");
 
   return (
-    <div className="bg-white p-6 rounded-xl shadow space-y-4">
+    <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl shadow-lg space-y-4">
 
       {/* ================= TOP ROW ================= */}
       <div className="flex items-center justify-between">
-        
+
         {/* TITLE */}
         <div>
-          <h1 className="text-3xl font-bold text-gray-800">
+          <h1 className="text-3xl font-bold text-gray-100">
             Admin Dashboard
           </h1>
-          <p className="text-gray-500 mt-1">
+          <p className="text-gray-400 mt-1">
             Create and manage platform content
           </p>
         </div>
@@ -45,8 +45,8 @@ const AdminHeader = () => {
             to="/admin"
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
               isTests
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                ? "bg-blue-700 text-white shadow-md"
+                : "bg-gray-800 hover:bg-gray-700 text-gray-300"
             }`}
           >
             🧪 Tests
@@ -56,8 +56,8 @@ const AdminHeader = () => {
             to="/admin/modules"
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
               isModules
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 hover:bg-gray-200 text-gray-700"
+                ? "bg-blue-700 text-white shadow-md"
+                : "bg-gray-800 hover:bg-gray-700 text-gray-300"
             }`}
           >
             📚 Modules

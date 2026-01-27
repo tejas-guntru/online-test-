@@ -36,19 +36,6 @@ import { db } from "../../firebase";
 const EditTestModal = ({ test, onClose }) => {
   const navigate = useNavigate();
 
-  /**
-   * handleDelete
-   *
-   * PURPOSE:
-   * - Safely deletes a test and ALL related data
-   *
-   * DELETION ORDER (IMPORTANT):
-   * 1. Questions → prevent orphaned documents
-   * 2. Results   → prevent invalid student history
-   * 3. Test      → final removal
-   *
-   * ⚠️ This action is irreversible
-   */
   const handleDelete = async () => {
     const confirmDelete = window.confirm(
       "This will permanently delete:\n\n" +
@@ -59,11 +46,9 @@ const EditTestModal = ({ test, onClose }) => {
         "Continue?"
     );
 
-    // Abort if admin cancels
     if (!confirmDelete) return;
 
     try {
-      /* ================= DELETE QUESTIONS ================= */
       const questionsQuery = query(
         collection(db, "questions"),
         where("testId", "==", test.id)
@@ -74,7 +59,6 @@ const EditTestModal = ({ test, onClose }) => {
         await deleteDoc(doc(db, "questions", q.id));
       }
 
-      /* ================= DELETE RESULTS ================= */
       const resultsQuery = query(
         collection(db, "results"),
         where("testId", "==", test.id)
@@ -85,7 +69,6 @@ const EditTestModal = ({ test, onClose }) => {
         await deleteDoc(doc(db, "results", r.id));
       }
 
-      /* ================= DELETE TEST ================= */
       await deleteDoc(doc(db, "tests", test.id));
 
       alert("Test deleted successfully");
@@ -97,8 +80,8 @@ const EditTestModal = ({ test, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white p-6 rounded-xl w-full max-w-lg">
+    <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50">
+      <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl w-full max-w-lg text-gray-100">
 
         {/* ================= HEADER ================= */}
         <div className="flex justify-between items-center mb-4">
@@ -106,10 +89,9 @@ const EditTestModal = ({ test, onClose }) => {
             Test Details
           </h2>
 
-          {/* Close modal */}
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-black"
+            className="text-gray-400 hover:text-white"
           >
             ✕
           </button>
@@ -117,33 +99,39 @@ const EditTestModal = ({ test, onClose }) => {
 
         {/* ================= READ-ONLY TEST DETAILS ================= */}
         <div className="space-y-3 text-sm">
-          
+
           {/* TITLE */}
           <div>
-            <p className="text-gray-500">Title</p>
-            <p className="font-medium">{test.title}</p>
+            <p className="text-gray-400">Title</p>
+            <p className="font-medium text-gray-100">
+              {test.title}
+            </p>
           </div>
 
           {/* DESCRIPTION */}
           <div>
-            <p className="text-gray-500">Description</p>
-            <p>{test.description || "No description"}</p>
+            <p className="text-gray-400">Description</p>
+            <p className="text-gray-200">
+              {test.description || "No description"}
+            </p>
           </div>
 
           {/* DURATION */}
           <div>
-            <p className="text-gray-500">Duration</p>
-            <p>{test.duration} minutes</p>
+            <p className="text-gray-400">Duration</p>
+            <p className="text-gray-200">
+              {test.duration} minutes
+            </p>
           </div>
 
           {/* STATUS */}
           <div>
-            <p className="text-gray-500">Status</p>
+            <p className="text-gray-400">Status</p>
             <p
               className={`font-semibold ${
                 test.isActive
-                  ? "text-green-600"
-                  : "text-red-600"
+                  ? "text-emerald-500"
+                  : "text-red-500"
               }`}
             >
               {test.isActive ? "Active" : "Revoked"}
@@ -153,30 +141,28 @@ const EditTestModal = ({ test, onClose }) => {
           {/* THUMBNAIL (OPTIONAL) */}
           {test.thumbnail && (
             <div>
-              <p className="text-gray-500 mb-1">
+              <p className="text-gray-400 mb-1">
                 Thumbnail
               </p>
               <img
                 src={test.thumbnail}
                 alt="Thumbnail"
-                className="w-full h-40 object-cover rounded border"
+                className="w-full h-40 object-cover rounded border border-gray-700"
               />
             </div>
           )}
         </div>
 
         {/* ================= DANGER ZONE ================= */}
-        <div className="mt-6 pt-4 border-t flex justify-between">
+        <div className="mt-6 pt-4 border-t border-gray-800 flex justify-between">
 
-          {/* CLOSE MODAL */}
           <button
             onClick={onClose}
-            className="px-4 py-2 rounded border"
+            className="px-4 py-2 rounded border border-gray-700 text-gray-300 hover:bg-gray-800"
           >
             Close
           </button>
 
-          {/* DELETE TEST */}
           <button
             onClick={handleDelete}
             className="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700"
