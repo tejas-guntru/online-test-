@@ -86,7 +86,7 @@ const DashboardTests = () => {
             Available Tests
           </h1>
           <p className="text-sm text-gray-400 mt-1">
-            Start a new test. Each test can be attempted only once.
+            Each test can be attempted only once.
           </p>
         </motion.div>
 

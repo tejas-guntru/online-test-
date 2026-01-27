@@ -10,7 +10,7 @@ import DashboardLayout from "./pages/DashboardLayout";
 /* ❗ KEEP THIS IMPORT AS REQUESTED */
 import DashboardHome from "./pages/CertificationVerification";
 
-/* ✅ REAL HOME PAGE (NEW) */
+/* ✅ REAL HOME PAGE */
 import RealDashboardHome from "./pages/DashboardHome";
 
 import DashboardTests from "./pages/DashboardTests";
@@ -19,7 +19,6 @@ import Profile from "./pages/Profile";
 
 /* ================= STUDENT OTHER PAGES ================= */
 import Test from "./pages/Test";
-import TestIntro from "./pages/TestIntro";
 import Result from "./pages/Result";
 import Modules from "./pages/Modules";
 import ModuleView from "./pages/ModuleView";
@@ -67,16 +66,7 @@ function App() {
           <Route path="profile" element={<Profile />} />
         </Route>
 
-        {/* ================= TEST FLOW ================= */}
-        <Route
-          path="/test/:id/intro"
-          element={
-            <ProtectedRoute>
-              <TestIntro />
-            </ProtectedRoute>
-          }
-        />
-
+        {/* ================= TEST FLOW (DIRECT) ================= */}
         <Route
           path="/test/:id"
           element={

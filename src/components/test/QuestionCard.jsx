@@ -41,16 +41,22 @@ const QuestionCard = ({
         )}
       </div>
 
-      {/* ================= OPTIONS ================= */}
+      {/* ================= OPTIONS (SHUFFLED, INDEX-SAFE) ================= */}
       <div className="space-y-3">
-        {question.options.map((option, index) => {
-          const isSelected = selectedOption === index;
+        {question.shuffledOptions.map((option, shuffledIndex) => {
+          const isSelected =
+            selectedOption?.shuffledIndex === shuffledIndex;
 
           return (
             <button
-              key={index}
+              key={shuffledIndex}
               type="button"
-              onClick={() => onSelectOption(index)}
+              onClick={() =>
+                onSelectOption({
+                  value: option,
+                  shuffledIndex,
+                })
+              }
               className={`
                 w-full text-left
                 flex items-center gap-4
@@ -76,7 +82,7 @@ const QuestionCard = ({
                   }
                 `}
               >
-                {String.fromCharCode(65 + index)}
+                {String.fromCharCode(65 + shuffledIndex)}
               </div>
 
               {/* Option text */}
@@ -97,13 +103,9 @@ const QuestionCard = ({
       {/* ================= HINT ================= */}
       <p className="text-xs text-white/40 text-center">
         Select an option and press{" "}
-        <span className="text-white/60 font-medium">
-          Next
-        </span>{" "}
+        <span className="text-white/60 font-medium">Next</span>{" "}
         or{" "}
-        <span className="text-white/60 font-medium">
-          Enter
-        </span>
+        <span className="text-white/60 font-medium">Enter</span>
       </p>
     </div>
   );

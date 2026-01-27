@@ -1,14 +1,17 @@
-// TestCard → Reusable card component used to display test details
 import TestCard from "./TestCard";
 
 /**
- * AvailableTests Component
+ * AvailableTests
  *
- * PURPOSE:
- * - Displays tests that the user has NOT attempted yet
- * - Allows user to start a test
+ * Displays tests that the user has NOT attempted yet
+ * Delegates navigation via onStart callback
  */
-const AvailableTests = ({ tests, onStart }) => {
+const AvailableTests = ({ tests = [], onStart }) => {
+  const handleStart = (testId) => {
+    if (typeof onStart !== "function") return;
+    onStart(testId);
+  };
+
   return (
     <div className="mb-10">
       {/* ================= SECTION TITLE ================= */}
@@ -26,37 +29,35 @@ const AvailableTests = ({ tests, onStart }) => {
       ) : (
         /* ================= AVAILABLE TESTS GRID ================= */
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tests.map((test) => {
-            // 🔍 DEBUG (REMOVE LATER)
-            console.log("Available test →", {
-              id: test.id,
-              previewImage: test.previewImage,
-            });
+          {tests.map((test) => (
+            <TestCard
+              key={test.id}
+              test={{
+                ...test,
+                previewImage: test.previewImage || null,
+              }}
+            >
+              {/* ================= TEST META ================= */}
+              <p className="text-sm text-gray-500 mb-4">
+                ⏱ {test.duration} minutes
+              </p>
 
-            return (
-              <TestCard
-                key={test.id}
-                test={{
-                  ...test,
-                  // ✅ FORCE explicit pass (bulletproof)
-                  previewImage: test.previewImage || null,
-                }}
+              {/* ================= START ACTION ================= */}
+              <button
+                onClick={() => handleStart(test.id)}
+                disabled={typeof onStart !== "function"}
+                className="
+                  w-full py-2 rounded-lg
+                  bg-green-600 text-white font-semibold
+                  hover:bg-green-700
+                  disabled:opacity-50
+                  disabled:cursor-not-allowed
+                "
               >
-                {/* ================= TEST META ================= */}
-                <p className="text-sm text-gray-500 mb-4">
-                  ⏱ {test.duration} minutes
-                </p>
-
-                {/* ================= START ACTION ================= */}
-                <button
-                  onClick={() => onStart(test.id)}
-                  className="w-full py-2 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700"
-                >
-                  Start Test
-                </button>
-              </TestCard>
-            );
-          })}
+                Start Test
+              </button>
+            </TestCard>
+          ))}
         </div>
       )}
     </div>

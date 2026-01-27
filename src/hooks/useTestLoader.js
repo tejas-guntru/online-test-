@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { db } from "../firebase";
+import { db, auth } from "../firebase";
 import {
   doc,
   getDoc,
@@ -7,29 +7,55 @@ import {
   query,
   where,
   getDocs,
+  limit,
 } from "firebase/firestore";
 
 /**
  * useTestLoader
  *
  * Loads:
- * - Test metadata (title, duration, certificate config)
+ * - Test metadata
  * - Questions linked to the test
  *
+ * Guards:
+ * - Blocks user if test already attempted (ONLY before start)
+ *
  * @param {string} testId
- * @param {function} onErrorRedirect (optional)
+ * @param {function} onErrorRedirect
+ * @param {boolean} skipAttemptCheck
  */
-const useTestLoader = (testId, onErrorRedirect) => {
+const useTestLoader = (
+  testId,
+  onErrorRedirect,
+  skipAttemptCheck = false
+) => {
   const [test, setTest] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!testId) return;
+    if (!testId || !auth.currentUser) return;
 
     const loadTest = async () => {
       try {
-        /* ===== Fetch test document ===== */
+        /* ================= CHECK ALREADY ATTEMPTED ================= */
+        if (!skipAttemptCheck) {
+          const attemptQuery = query(
+            collection(db, "results"),
+            where("userId", "==", auth.currentUser.uid),
+            where("testId", "==", testId),
+            limit(1)
+          );
+
+          const attemptSnap = await getDocs(attemptQuery);
+
+          if (!attemptSnap.empty) {
+            if (onErrorRedirect) onErrorRedirect();
+            return;
+          }
+        }
+
+        /* ================= FETCH TEST ================= */
         const testRef = doc(db, "tests", testId);
         const testSnap = await getDoc(testRef);
 
@@ -40,9 +66,16 @@ const useTestLoader = (testId, onErrorRedirect) => {
         }
 
         const testData = testSnap.data();
+
+        if (testData.isActive === false) {
+          alert("This test is no longer active.");
+          if (onErrorRedirect) onErrorRedirect();
+          return;
+        }
+
         setTest(testData);
 
-        /* ===== Fetch questions ===== */
+        /* ================= FETCH QUESTIONS ================= */
         const q = query(
           collection(db, "questions"),
           where("testId", "==", testId)
@@ -50,9 +83,15 @@ const useTestLoader = (testId, onErrorRedirect) => {
 
         const qsnap = await getDocs(q);
 
-        const questionList = qsnap.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
+        if (qsnap.empty) {
+          alert("No questions found for this test.");
+          if (onErrorRedirect) onErrorRedirect();
+          return;
+        }
+
+        const questionList = qsnap.docs.map((d) => ({
+          id: d.id,
+          ...d.data(),
         }));
 
         setQuestions(questionList);
@@ -65,7 +104,7 @@ const useTestLoader = (testId, onErrorRedirect) => {
     };
 
     loadTest();
-  }, [testId, onErrorRedirect]);
+  }, [testId, onErrorRedirect, skipAttemptCheck]);
 
   return {
     test,
