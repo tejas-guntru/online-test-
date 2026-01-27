@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import { storage, db } from "../../firebase";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { doc, updateDoc } from "firebase/firestore";
@@ -24,10 +25,9 @@ const AvatarUploader = ({ user }) => {
         avatar: url,
       });
 
-      alert("Avatar updated");
+      // Apple-style: no alert popups
     } catch (err) {
       console.error(err);
-      alert("Upload failed");
     } finally {
       setUploading(false);
     }
@@ -40,23 +40,27 @@ const AvatarUploader = ({ user }) => {
         rounded-xl p-5 mb-6
         bg-[#020617]
         border border-white/5
-        shadow-[0_10px_30px_rgba(0,0,0,0.4)]
       "
     >
       {/* ================= AVATAR PREVIEW ================= */}
-      <div className="relative">
+      <motion.div
+        whileHover={{ scale: 1.03 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
+        className="relative"
+      >
         <img
           src={user.avatar || "/avatar-placeholder.png"}
           alt="avatar"
           className="
             w-24 h-24 rounded-full object-cover
             border border-white/10
+            shadow-[0_0_14px_rgba(34,211,238,0.18)]
           "
         />
 
-        {/* subtle ring for focus */}
+        {/* Soft focus ring */}
         <div className="absolute inset-0 rounded-full ring-1 ring-white/5" />
-      </div>
+      </motion.div>
 
       {/* ================= ACTION ================= */}
       <div className="flex flex-col gap-1">
@@ -64,13 +68,15 @@ const AvatarUploader = ({ user }) => {
           Profile Avatar
         </p>
 
-        <label
+        <motion.label
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ duration: 0.2 }}
           className="
             inline-flex items-center gap-2
             text-sm font-medium
             text-white/70
             cursor-pointer
-            transition-all duration-200
             hover:text-cyan-300
           "
         >
@@ -85,7 +91,7 @@ const AvatarUploader = ({ user }) => {
               handleUpload(e.target.files[0])
             }
           />
-        </label>
+        </motion.label>
 
         <p className="text-xs text-white/45">
           JPG or PNG • Recommended 1:1

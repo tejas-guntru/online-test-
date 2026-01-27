@@ -3,6 +3,9 @@
  *
  * Displays high-level user performance analytics
  */
+
+import { motion } from "framer-motion";
+
 const ProfileAnalytics = ({ results }) => {
   const total = results.length;
 
@@ -14,11 +17,24 @@ const ProfileAnalytics = ({ results }) => {
 
   return (
     /* ==================== ANALYTICS GRID ==================== */
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true }}
+      variants={{
+        hidden: {},
+        visible: {
+          transition: {
+            staggerChildren: 0.08,
+          },
+        },
+      }}
+      className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8"
+    >
       <Stat label="Tests Attempted" value={total} />
       <Stat label="Passed" value={passed} />
       <Stat label="Failed" value={failed} />
-    </div>
+    </motion.div>
   );
 };
 
@@ -28,15 +44,17 @@ const ProfileAnalytics = ({ results }) => {
  * Displays a single analytics metric
  */
 const Stat = ({ label, value }) => (
-  <div
+  <motion.div
+    variants={{
+      hidden: { opacity: 0, y: 20 },
+      visible: { opacity: 1, y: 0 },
+    }}
+    transition={{ duration: 0.4, ease: "easeOut" }}
     className="
       rounded-xl p-5
       bg-[#020617]
       border border-white/5
       text-center
-      shadow-[0_10px_30px_rgba(0,0,0,0.4)]
-      transition
-      hover:border-cyan-400/40
     "
   >
     <p className="text-sm text-white/55 mb-1">
@@ -46,7 +64,7 @@ const Stat = ({ label, value }) => (
     <p className="text-3xl font-semibold text-white/90">
       {value}
     </p>
-  </div>
+  </motion.div>
 );
 
 export default ProfileAnalytics;

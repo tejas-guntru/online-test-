@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { auth, db } from "../firebase";
 import {
   collection,
@@ -90,21 +91,28 @@ const DashboardAttempts = () => {
 
   return (
     <div className="pt-16 px-4 md:px-6">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-10">
 
         {/* ================= PAGE HEADER ================= */}
-        <div>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
           <h1 className="text-2xl md:text-3xl font-bold text-cyan-300">
             Attempted Tests
           </h1>
           <p className="text-sm text-gray-400 mt-1">
             Review your completed tests and performance.
           </p>
-        </div>
+        </motion.div>
 
         {/* ================= SUMMARY ================= */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
             className="
               bg-black/40 backdrop-blur-xl
               border border-white/10
@@ -118,9 +126,12 @@ const DashboardAttempts = () => {
             <p className="text-3xl font-bold text-white mt-1">
               {totalAttempts}
             </p>
-          </div>
+          </motion.div>
 
-          <div
+          <motion.div
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.18, duration: 0.6, ease: "easeOut" }}
             className="
               bg-black/40 backdrop-blur-xl
               border border-white/10
@@ -134,11 +145,15 @@ const DashboardAttempts = () => {
             <p className="text-3xl font-bold text-white mt-1">
               {averageScore}%
             </p>
-          </div>
+          </motion.div>
         </div>
 
         {/* ================= TEST HISTORY ================= */}
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
           className="
             bg-black/40 backdrop-blur-xl
             border border-white/10
@@ -154,7 +169,8 @@ const DashboardAttempts = () => {
             tests={tests}
             resultsMap={resultsMap}
           />
-        </div>
+        </motion.div>
+
       </div>
     </div>
   );

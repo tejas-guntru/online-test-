@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import tgLogo from "../../assets/tg-logo.png";
 
@@ -5,8 +6,12 @@ const DashboardHero = () => {
   const navigate = useNavigate();
 
   return (
-    <section className="relative overflow-hidden rounded-3xl border border-white/5">
-
+    <motion.section
+      initial={{ opacity: 0, scale: 0.98 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.9, ease: [0.22, 1, 0.36, 1] }}
+      className="relative overflow-hidden rounded-3xl border border-white/5"
+    >
       {/* ===== Background ===== */}
       <div className="absolute inset-0 bg-gradient-to-br from-[#020617] via-[#020617] to-[#020617]" />
 
@@ -28,24 +33,20 @@ const DashboardHero = () => {
       <div className="relative px-6 py-16 sm:px-10 sm:py-24">
         <div className="relative max-w-6xl mx-auto flex gap-12">
 
-          {/* ===== LEFT: MAIN HERO CONTENT ===== */}
-          <div className="max-w-3xl space-y-8">
-
+          {/* ===== LEFT ===== */}
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15, duration: 0.8, ease: "easeOut" }}
+            className="max-w-3xl space-y-8"
+          >
             {/* Badge */}
             <span className="inline-flex items-center px-4 py-1.5 rounded-full text-xs sm:text-sm font-medium bg-cyan-400/15 text-cyan-300 border border-cyan-400/30">
               Performance-Based Certification
             </span>
 
             {/* Heading */}
-            <h1
-              className="
-                font-semibold leading-tight text-white
-                text-3xl
-                sm:text-4xl
-                md:text-5xl
-                lg:text-6xl
-              "
-            >
+            <h1 className="font-semibold leading-tight text-white text-3xl sm:text-4xl md:text-5xl lg:text-6xl">
               Prove Your Skills.
               <span className="block text-cyan-400">
                 Earn Certificates That Can Be Verified.
@@ -53,58 +54,60 @@ const DashboardHero = () => {
             </h1>
 
             {/* Subtitle */}
-            <p
-              className="
-                text-white/70 leading-relaxed max-w-2xl
-                text-sm
-                sm:text-base
-                md:text-lg
-              "
-            >
+            <p className="text-white/70 leading-relaxed max-w-2xl text-sm sm:text-base md:text-lg">
               Complete structured assessments, get evaluated instantly,
               and earn certificates backed by real performance — not claims.
             </p>
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row gap-4 pt-4">
-              <button
+              <motion.button
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.2 }}
                 onClick={() => navigate("/dashboard/tests")}
                 className="
                   px-6 py-3 rounded-xl
                   bg-cyan-500 text-black font-medium
-                  hover:bg-cyan-400 transition
+                  hover:bg-cyan-400
                   shadow-[0_0_40px_rgba(34,211,238,0.45)]
                   text-sm sm:text-base
                 "
               >
                 Start a Test
-              </button>
+              </motion.button>
 
-              <button
+              <motion.button
+                whileHover={{ y: -2 }}
+                transition={{ duration: 0.2 }}
                 onClick={() => navigate("/dashboard/verify")}
                 className="
                   px-6 py-3 rounded-xl
                   border border-white/15
                   text-white/80
                   hover:border-cyan-400/50
-                  hover:text-white transition
+                  hover:text-white
                   text-sm sm:text-base
                 "
               >
                 Verify Certificate
-              </button>
+              </motion.button>
             </div>
-          </div>
+          </motion.div>
 
-          {/* ===== RIGHT: YOUTUBE SUBSCRIBE (DESKTOP ONLY) ===== */}
-          <div className="hidden lg:flex flex-1 items-center justify-end">
+          {/* ===== RIGHT (YouTube card) ===== */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35, duration: 0.8 }}
+            className="hidden lg:flex flex-1 items-center justify-end"
+          >
             <a
               href="https://youtube.com/@terigoprogress"
               target="_blank"
               rel="noopener noreferrer"
               className="
-                group
-                p-6 rounded-2xl
+                group p-6 rounded-2xl
                 border border-white/10
                 bg-white/5 backdrop-blur
                 hover:border-red-500/40
@@ -114,19 +117,8 @@ const DashboardHero = () => {
                 hover:-translate-y-1
               "
             >
-              {/* Logo Row */}
               <div className="flex items-center gap-4 mb-4">
-                <div
-                  className="
-                    w-12 h-12 rounded-full
-                    bg-black/40
-                    border border-white/10
-                    overflow-hidden
-                    flex items-center justify-center
-                    group-hover:shadow-[0_0_20px_rgba(239,68,68,0.35)]
-                    transition
-                  "
-                >
+                <div className="w-12 h-12 rounded-full bg-black/40 border border-white/10 overflow-hidden flex items-center justify-center">
                   <img
                     src={tgLogo}
                     alt="Teri Go Progress"
@@ -153,11 +145,11 @@ const DashboardHero = () => {
                 Subscribe →
               </div>
             </a>
-          </div>
+          </motion.div>
 
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };
 

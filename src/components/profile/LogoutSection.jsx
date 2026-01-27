@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import ConfirmLogoutModal from "./ConfirmLogoutModal";
 
 const LogoutSection = ({ onLogout }) => {
@@ -6,26 +7,29 @@ const LogoutSection = ({ onLogout }) => {
 
   return (
     <>
-      <div className="mt-12 border-t pt-6">
-        <h3 className="text-sm font-semibold text-gray-700 mb-2">
+      <div className="mt-12 border-t border-white/5 pt-6">
+        <h3 className="text-sm font-semibold text-white/70 mb-3">
           Account Actions
         </h3>
 
-        <button
+        <motion.button
+          whileHover={{ y: -1 }}
+          whileTap={{ scale: 0.97 }}
+          transition={{ duration: 0.15 }}
           onClick={() => setOpen(true)}
           className="
-            w-full
-            md:w-auto
+            inline-flex items-center
             px-4 py-2
-            bg-red-600
-            text-white
-            rounded
-            hover:bg-red-700
-            transition
+            rounded-md
+            bg-transparent
+            border border-red-500/30
+            text-red-400
+            hover:border-red-400/60
+            hover:text-red-300
           "
         >
-          Logout
-        </button>
+          Log out
+        </motion.button>
       </div>
 
       <ConfirmLogoutModal

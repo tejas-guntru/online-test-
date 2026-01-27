@@ -5,6 +5,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { auth, db } from "../firebase";
 import {
   collection,
@@ -95,22 +96,30 @@ const Profile = () => {
   }
 
   return (
-    // ⬇️ Padding-top accounts for fixed DashboardHeader
-    <div className=" pb-16">
-      <div className="max-w-7xl mx-auto px-6 md:px-10 space-y-12">
+    <div className="pb-16">
+      <div className="max-w-7xl mx-auto px-6 md:px-10 space-y-14">
 
         {/* ================= TITLE ================= */}
-        <div>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
           <h1 className="text-3xl font-semibold text-cyan-400">
             Your Profile
           </h1>
           <p className="text-gray-500 mt-1">
             Manage your account and certificates
           </p>
-        </div>
+        </motion.div>
 
         {/* ================= AVATAR ================= */}
-        <div className="bg-[#020617] border border-white/5 rounded-xl p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.05, duration: 0.6, ease: "easeOut" }}
+          className="bg-[#020617] border border-white/5 rounded-xl p-6"
+        >
           <AvatarSection
             avatar={userInfo.avatar}
             onRegenerate={async () => {
@@ -119,10 +128,15 @@ const Profile = () => {
               setUserInfo((u) => ({ ...u, avatar }));
             }}
           />
-        </div>
+        </motion.div>
 
         {/* ================= PROFILE FORM ================= */}
-        <div className="bg-[#020617] border border-white/5 rounded-xl p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
+          className="bg-[#020617] border border-white/5 rounded-xl p-6"
+        >
           <ProfileForm
             name={name}
             email={userInfo.email}
@@ -134,13 +148,26 @@ const Profile = () => {
             }}
             saving={saving}
           />
-        </div>
+        </motion.div>
 
         {/* ================= STATS ================= */}
-        <StatsGrid analytics={calculateAnalytics(results)} />
+        <motion.div
+          initial={{ opacity: 0, y: 28 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
+          <StatsGrid analytics={calculateAnalytics(results)} />
+        </motion.div>
 
         {/* ================= TEST RESULTS ================= */}
-        <div className="bg-[#020617] border border-white/5 rounded-xl p-6">
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="bg-[#020617] border border-white/5 rounded-xl p-6"
+        >
           <TestResultsList
             results={results}
             testsMap={testsMap}
@@ -166,12 +193,18 @@ const Profile = () => {
               });
             }}
           />
-        </div>
+        </motion.div>
 
         {/* ================= LOGOUT ================= */}
-        <div className="pt-8 border-t border-white/5">
+        <motion.div
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5, ease: "easeOut" }}
+          className="pt-8 border-t border-white/5"
+        >
           <LogoutSection onLogout={handleLogout} confirm />
-        </div>
+        </motion.div>
 
         {/* ================= PAYMENT POPUP ================= */}
         <PaymentPopup

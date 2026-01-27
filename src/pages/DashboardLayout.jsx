@@ -1,3 +1,4 @@
+import { motion } from "framer-motion";
 import { Outlet } from "react-router-dom";
 import DashboardHeader from "../components/dashboard/DashboardHeader";
 
@@ -12,10 +13,18 @@ const DashboardLayout = () => {
         overflow-hidden
       "
     >
-      {/* ================= BACKGROUND GLOWS (LOWEST) ================= */}
-      <div className="absolute inset-0 pointer-events-none z-0">
+      {/* ================= BACKGROUND GLOWS ================= */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 1.2, ease: "easeOut" }}
+        className="absolute inset-0 pointer-events-none z-0"
+      >
         {/* Top cyan glow */}
-        <div
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.4, ease: "easeOut" }}
           className="
             absolute
             -top-48
@@ -30,7 +39,10 @@ const DashboardLayout = () => {
         />
 
         {/* Bottom violet glow */}
-        <div
+        <motion.div
+          initial={{ scale: 0.95, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.6, ease: "easeOut", delay: 0.1 }}
           className="
             absolute
             bottom-[-300px]
@@ -42,17 +54,27 @@ const DashboardLayout = () => {
             blur-[180px]
           "
         />
-      </div>
+      </motion.div>
 
-      {/* ================= HEADER (ABOVE GLOWS) ================= */}
-      <div className="relative z-20">
+      {/* ================= HEADER ================= */}
+      <motion.div
+        initial={{ opacity: 0, y: -12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="relative z-20"
+      >
         <DashboardHeader />
-      </div>
+      </motion.div>
 
       {/* ================= PAGE CONTENT ================= */}
-      <main className="relative z-10">
+      <motion.main
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.6, ease: "easeOut", delay: 0.1 }}
+        className="relative z-10"
+      >
         <Outlet />
-      </main>
+      </motion.main>
     </div>
   );
 };

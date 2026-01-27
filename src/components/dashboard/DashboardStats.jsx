@@ -1,3 +1,7 @@
+import { motion } from "framer-motion";
+
+/* ================= DATA ================= */
+
 const stats = [
   {
     label: "Tests Available",
@@ -28,6 +32,8 @@ const accentMap = {
   violet: "from-violet-400/30 to-violet-400/0",
 };
 
+/* ================= COMPONENT ================= */
+
 const DashboardStats = () => {
   return (
     <section
@@ -36,13 +42,20 @@ const DashboardStats = () => {
         gap-4 sm:gap-6
       "
     >
-      {stats.map((stat) => (
-        <StatCard
+      {stats.map((stat, index) => (
+        <motion.div
           key={stat.label}
-          label={stat.label}
-          value={stat.value}
-          accent={stat.accent}
-        />
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{
+            duration: 0.6,
+            delay: index * 0.08,
+            ease: "easeOut",
+          }}
+        >
+          <StatCard {...stat} />
+        </motion.div>
       ))}
     </section>
   );
@@ -54,15 +67,15 @@ export default DashboardStats;
 
 const StatCard = ({ label, value, accent }) => {
   return (
-    <div
+    <motion.div
+      whileHover={{ y: -6 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
       className="
         relative overflow-hidden
         rounded-2xl
         border border-white/10
         bg-[#020617]
         p-4 sm:p-6
-        transition
-        hover:-translate-y-1
         hover:shadow-[0_0_30px_rgba(34,211,238,0.18)]
       "
     >
@@ -97,6 +110,6 @@ const StatCard = ({ label, value, accent }) => {
           {label}
         </p>
       </div>
-    </div>
+    </motion.div>
   );
 };

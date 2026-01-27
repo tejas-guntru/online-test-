@@ -1,6 +1,14 @@
+import { motion } from "framer-motion";
+
 const DashboardFooterNote = () => {
   return (
-    <section className="pt-8">
+    <motion.section
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.6, ease: "easeOut" }}
+      className="pt-8"
+    >
       <div
         className="
           relative
@@ -32,7 +40,7 @@ const DashboardFooterNote = () => {
           </p>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 };
 

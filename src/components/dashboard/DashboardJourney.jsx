@@ -1,4 +1,7 @@
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+
+/* ================= DATA ================= */
 
 const journeySteps = [
   {
@@ -29,6 +32,8 @@ const journeySteps = [
   },
 ];
 
+/* ================= COMPONENT ================= */
+
 const DashboardJourney = () => {
   const navigate = useNavigate();
 
@@ -36,7 +41,13 @@ const DashboardJourney = () => {
     <section className="space-y-10">
 
       {/* ===== Header ===== */}
-      <div className="space-y-2 max-w-3xl">
+      <motion.div
+        initial={{ opacity: 0, y: 24 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.6, ease: "easeOut" }}
+        className="space-y-2 max-w-3xl"
+      >
         <h2 className="text-xl sm:text-2xl font-semibold text-cyan-400">
           Certification Journey
         </h2>
@@ -44,20 +55,28 @@ const DashboardJourney = () => {
           Every certificate follows a fair, performance-based flow — no
           shortcuts, no ambiguity.
         </p>
-      </div>
+      </motion.div>
 
       {/* ===== Journey Grid ===== */}
       <div className="relative grid grid-cols-1 md:grid-cols-4 gap-6">
-
         {journeySteps.map((item, index) => (
-          <JourneyCard
+          <motion.div
             key={item.step}
-            {...item}
-            isLast={index === journeySteps.length - 1}
-            onNavigate={navigate}
-          />
+            initial={{ opacity: 0, y: 32 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{
+              duration: 0.6,
+              delay: index * 0.1,
+              ease: "easeOut",
+            }}
+          >
+            <JourneyCard
+              {...item}
+              onNavigate={navigate}
+            />
+          </motion.div>
         ))}
-
       </div>
     </section>
   );
@@ -76,7 +95,9 @@ const JourneyCard = ({
   onNavigate,
 }) => {
   return (
-    <div
+    <motion.div
+      whileHover={{ y: -6 }}
+      transition={{ duration: 0.25, ease: "easeOut" }}
       className="
         relative
         rounded-2xl
@@ -84,8 +105,6 @@ const JourneyCard = ({
         bg-[#020617]
         p-6
         space-y-4
-        transition
-        hover:-translate-y-1
         hover:shadow-[0_0_35px_rgba(34,211,238,0.18)]
       "
     >
@@ -132,6 +151,6 @@ const JourneyCard = ({
 
       {/* Accent Glow */}
       <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-400/10 to-transparent opacity-40 pointer-events-none" />
-    </div>
+    </motion.div>
   );
 };

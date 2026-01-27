@@ -1,5 +1,6 @@
 // components/profile/TestResultsList.jsx
 
+import { motion } from "framer-motion";
 import RetakeRequestButton from "../retake/RetakeRequestButton";
 
 const CERTIFICATE_META = {
@@ -18,11 +19,29 @@ const TestResultsList = ({
   return (
     <>
       {/* ================= HEADER ================= */}
-      <h2 className="text-lg font-semibold mb-4 text-white/90">
+      <motion.h2
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, ease: "easeOut" }}
+        className="text-lg font-semibold mb-4 text-white/90"
+      >
         Test Results
-      </h2>
+      </motion.h2>
 
-      <div className="space-y-4">
+      <motion.div
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        variants={{
+          hidden: {},
+          visible: {
+            transition: {
+              staggerChildren: 0.06,
+            },
+          },
+        }}
+        className="space-y-4"
+      >
         {results.map((r) => {
           const test = testsMap[r.testId];
           const tier = r.certificateEarned;
@@ -31,13 +50,17 @@ const TestResultsList = ({
           /* ================= NO CERTIFICATE ================= */
           if (!tier) {
             return (
-              <div
+              <motion.div
                 key={r.id}
+                variants={{
+                  hidden: { opacity: 0, y: 16 },
+                  visible: { opacity: 1, y: 0 },
+                }}
+                transition={{ duration: 0.4, ease: "easeOut" }}
                 className="
                   rounded-xl p-5
                   bg-[#020617]
                   border border-white/5
-                  shadow-[0_10px_30px_rgba(0,0,0,0.4)]
                 "
               >
                 <p className="text-white/85 font-medium">
@@ -52,20 +75,24 @@ const TestResultsList = ({
                   result={r}
                   user={userInfo}
                 />
-              </div>
+              </motion.div>
             );
           }
 
           /* ================= CERTIFICATE EARNED ================= */
           return (
-            <div
+            <motion.div
               key={r.id}
+              variants={{
+                hidden: { opacity: 0, y: 16 },
+                visible: { opacity: 1, y: 0 },
+              }}
+              transition={{ duration: 0.4, ease: "easeOut" }}
               className="
                 flex justify-between items-center gap-4
                 rounded-xl p-5
                 bg-[#020617]
                 border border-white/5
-                shadow-[0_10px_30px_rgba(0,0,0,0.4)]
               "
             >
               <div className="space-y-1">
@@ -79,18 +106,21 @@ const TestResultsList = ({
                 </p>
 
                 {cert?.isPaid ? (
-                  <p className="text-sm text-orange-400">
+                  <p className="text-sm text-orange-400/90">
                     Paid Certificate • ₹{cert.price}
                   </p>
                 ) : (
-                  <p className="text-sm text-emerald-400">
+                  <p className="text-sm text-emerald-400/90">
                     Free Certificate
                   </p>
                 )}
               </div>
 
               {/* ================= ACTION ================= */}
-              <button
+              <motion.button
+                whileHover={{ y: -1 }}
+                whileTap={{ scale: 0.97 }}
+                transition={{ duration: 0.15 }}
                 onClick={() =>
                   cert?.isPaid
                     ? onPaidClick(r, cert, test)
@@ -102,18 +132,16 @@ const TestResultsList = ({
                   bg-transparent
                   border border-white/10
                   text-white/80
-                  transition-all duration-200
-                  hover:border-cyan-400
+                  hover:border-cyan-400/60
                   hover:text-cyan-300
-                  hover:shadow-[0_0_12px_rgba(34,211,238,0.25)]
                 "
               >
                 {cert?.isPaid ? "Unlock" : "Download"}
-              </button>
-            </div>
+              </motion.button>
+            </motion.div>
           );
         })}
-      </div>
+      </motion.div>
     </>
   );
 };

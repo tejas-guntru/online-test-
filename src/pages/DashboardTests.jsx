@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { auth, db } from "../firebase";
 import {
   collection,
@@ -73,19 +74,27 @@ const DashboardTests = () => {
 
   return (
     <div className="pt-16 px-4 md:px-6">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-10">
+
         {/* ================= PAGE HEADER ================= */}
-        <div>
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+        >
           <h1 className="text-2xl md:text-3xl font-bold text-cyan-300">
             Available Tests
           </h1>
           <p className="text-sm text-gray-400 mt-1">
             Start a new test. Each test can be attempted only once.
           </p>
-        </div>
+        </motion.div>
 
         {/* ================= SEARCH ================= */}
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1, duration: 0.6, ease: "easeOut" }}
           className="
             bg-black/40 backdrop-blur-xl
             border border-white/10
@@ -97,17 +106,27 @@ const DashboardTests = () => {
             value={searchTerm}
             onChange={setSearchTerm}
           />
-        </div>
+        </motion.div>
 
         {/* ================= TEST LIST ================= */}
         {filteredTests.length > 0 ? (
-          <AvailableTests
-            tests={filteredTests}
-            onStart={(id) => navigate(`/test/${id}`)}
-          />
+          <motion.div
+            initial={{ opacity: 0, y: 32 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6, ease: "easeOut" }}
+          >
+            <AvailableTests
+              tests={filteredTests}
+              onStart={(id) => navigate(`/test/${id}`)}
+            />
+          </motion.div>
         ) : (
           /* ================= EMPTY STATE ================= */
-          <div
+          <motion.div
+            initial={{ opacity: 0, scale: 0.97 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5, ease: "easeOut" }}
             className="
               bg-black/40 backdrop-blur-xl
               border border-white/10
@@ -122,8 +141,9 @@ const DashboardTests = () => {
             <p className="text-sm text-gray-500 mt-2">
               Check your performance in the Attempts section.
             </p>
-          </div>
+          </motion.div>
         )}
+
       </div>
     </div>
   );

@@ -1,21 +1,31 @@
+import { motion } from "framer-motion";
 import CertificateVerificationBox from "../components/dashboard/CertificateVerificationBox";
 
 const CertificationVerification = () => {
   return (
     <div className="pt-16 px-4 md:px-6">
       <div className="max-w-4xl mx-auto">
+
         {/* ================= PAGE CONTEXT ================= */}
-        <div className="mb-8 text-center">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: "easeOut" }}
+          className="mb-8 text-center"
+        >
           <h1 className="text-2xl md:text-3xl font-bold text-cyan-300">
             Certificate Verification
           </h1>
           <p className="mt-2 text-sm text-gray-400">
             Verify certificates issued by TestGenius securely and instantly.
           </p>
-        </div>
+        </motion.div>
 
         {/* ================= VERIFICATION BOX ================= */}
-        <div
+        <motion.div
+          initial={{ opacity: 0, y: 32 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12, duration: 0.6, ease: "easeOut" }}
           className="
             relative
             bg-black/40
@@ -27,7 +37,8 @@ const CertificationVerification = () => {
           "
         >
           <CertificateVerificationBox />
-        </div>
+        </motion.div>
+
       </div>
     </div>
   );
