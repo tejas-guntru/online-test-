@@ -1,17 +1,20 @@
 import { useEffect, useRef, useCallback } from "react";
 
 /**
- * useExamAntiCheat
+ * useExamAntiCheat (FINAL – MOBILE SAFE)
  *
- * Responsibilities:
- * - Track malpractice violations
- * - Detect fullscreen exit
- * - Detect tab switch / window blur
+ * Desktop:
+ * - Fullscreen enforcement
+ * - Blur / tab switch detection
+ * - Resize / split-screen detection
  *
- * ❌ Does NOT:
- * - Submit exam
- * - Show UI
- * - Navigate
+ * Mobile:
+ * - App switch / screen lock detection
+ * - Orientation change detection
+ *
+ * Protections:
+ * - Cooldown to prevent double violations
+ * - Auto-submit locked to once
  */
 const useExamAntiCheat = ({
   hasStarted,
@@ -20,29 +23,76 @@ const useExamAntiCheat = ({
   maxViolations = 3,
 }) => {
   const violationCount = useRef(0);
+  const lastViolationTime = useRef(0);
+  const isLocked = useRef(false);
 
+  const isMobile =
+    /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  /* ================= REGISTER VIOLATION ================= */
   const registerViolation = useCallback(
     (reason) => {
-      if (!hasStarted || isSubmitting) return;
+      if (!hasStarted || isSubmitting || isLocked.current) return;
+
+      // ⏱ Prevent double-counting (blur + visibility)
+      const now = Date.now();
+      if (now - lastViolationTime.current < 1500) return;
+      lastViolationTime.current = now;
 
       violationCount.current += 1;
 
       if (violationCount.current <= maxViolations) {
         alert(
-          `⚠️ Malpractice detected (${violationCount.current}/${maxViolations})\n\nReason: ${reason}`
+          `⚠️ Exam Warning (${violationCount.current}/${maxViolations})\n\n${reason}`
         );
       }
 
       if (violationCount.current > maxViolations) {
-        alert("❌ Exam terminated due to repeated malpractice.");
+        isLocked.current = true;
+        alert("❌ Exam auto-submitted due to repeated violations.");
         onAutoSubmit();
       }
     },
     [hasStarted, isSubmitting, maxViolations, onAutoSubmit]
   );
 
-  /* ================= FULLSCREEN ================= */
+  /* ================= VISIBILITY (DESKTOP + MOBILE) ================= */
   useEffect(() => {
+    const onVisibilityChange = () => {
+      if (document.hidden) {
+        registerViolation(
+          "App switched, screen locked, or tab changed"
+        );
+      }
+    };
+
+    document.addEventListener(
+      "visibilitychange",
+      onVisibilityChange
+    );
+    return () =>
+      document.removeEventListener(
+        "visibilitychange",
+        onVisibilityChange
+      );
+  }, [registerViolation]);
+
+  /* ================= WINDOW BLUR (DESKTOP ONLY) ================= */
+  useEffect(() => {
+    if (isMobile) return;
+
+    const onBlur = () => {
+      registerViolation("Browser window lost focus");
+    };
+
+    window.addEventListener("blur", onBlur);
+    return () => window.removeEventListener("blur", onBlur);
+  }, [registerViolation, isMobile]);
+
+  /* ================= FULLSCREEN (DESKTOP ONLY) ================= */
+  useEffect(() => {
+    if (isMobile) return;
+
     const onFullscreenChange = () => {
       if (
         hasStarted &&
@@ -62,38 +112,43 @@ const useExamAntiCheat = ({
         "fullscreenchange",
         onFullscreenChange
       );
-  }, [hasStarted, isSubmitting, registerViolation]);
+  }, [hasStarted, isSubmitting, registerViolation, isMobile]);
 
-  /* ================= TAB / WINDOW SWITCH ================= */
+  /* ================= ORIENTATION CHANGE (MOBILE ONLY) ================= */
   useEffect(() => {
-    const onVisibilityChange = () => {
-      if (document.hidden) {
-        registerViolation("Switched browser tab");
-      }
+    if (!isMobile) return;
+
+    const onOrientationChange = () => {
+      registerViolation("Device orientation changed");
     };
 
-    const onBlur = () => {
-      registerViolation("Browser window lost focus");
-    };
-
-    document.addEventListener(
-      "visibilitychange",
-      onVisibilityChange
+    window.addEventListener(
+      "orientationchange",
+      onOrientationChange
     );
-    window.addEventListener("blur", onBlur);
-
-    return () => {
-      document.removeEventListener(
-        "visibilitychange",
-        onVisibilityChange
+    return () =>
+      window.removeEventListener(
+        "orientationchange",
+        onOrientationChange
       );
-      window.removeEventListener("blur", onBlur);
+  }, [registerViolation, isMobile]);
+
+  /* ================= RESIZE / SPLIT SCREEN (DESKTOP ONLY) ================= */
+  useEffect(() => {
+    if (isMobile) return; // 🚫 ignore resize on mobile
+
+    const onResize = () => {
+      registerViolation("Screen resized or split view detected");
     };
-  }, [registerViolation]);
+
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [registerViolation, isMobile]);
 
   return {
     violationCount,
     registerViolation,
+    isMobile,
   };
 };
 
